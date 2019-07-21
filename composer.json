@@ -1,0 +1,26 @@
+{
+    "name": "yugeon/html5parser",
+    "description": "True HTML5 parser of invalid html",
+    "type": "library",
+    "license": "private",
+    "authors": [
+        {
+            "name": "Yugeon A. Gruzdev",
+            "email": "yugeon.ru@gmail.com"
+        }
+    ],
+    "scripts": {
+        "tests": "./vendor/bin/phpunit"
+    },
+    "require": {
+        "php": ">=5.6.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Yugeon\\": "src/Yugeon/"
+        }
+    }
+}
