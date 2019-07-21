@@ -8,11 +8,6 @@ use Yugeon\HTML5Parser\Parser;
 class ParserTest extends TestCase {
 
     private $testClass;
-    static private $testContent;
-
-    static function setUpBeforeClass() {
-        self::$testContent = file_get_contents(__DIR__ . '/../assets/6pm.html');
-    }
 
     function setUp() {
         $this->testClass = new Parser();
@@ -68,6 +63,32 @@ class ParserTest extends TestCase {
         $html = '<div><h1>Hello <br /> World</h1></div>';
         $this->testClass->parse($html);
         $this->assertTrue(is_float($this->testClass->getWorkTime()));
+    }
+
+    public function testNodesMustBeCollection()
+    {
+        $html = '<div><h1>Hello <br /> World</h1></div>';
+        $this->testClass->parse($html);
+        $this->assertTrue(get_class($this->testClass->getNodes()) == 'Yugeon\HTML5Parser\NodeCollection');
+    }
+
+    public function _testGetNodeNestingLevel()
+    {
+        $html = '<div>
+                    <p>Hello</p>
+                    <!-- comment -->
+                    <script type="text/javascript">
+                        var a = "<body></body>";
+                    </script>
+                    <template id="abc">
+                        <div>hello</div>
+                    </template>
+                </div>';
+        $this->testClass->parse($html);
+        $nodes = $this->testClass->getNodes();
+        $this->assertEquals(0, $nodes->item(0)->getLevel()); // <div>
+        $this->assertEquals(1, $nodes->item(1)->getLevel()); // <p>
+        $this->assertEquals(1, $nodes->item(1)->getLevel()); // </p>
     }
 
 }

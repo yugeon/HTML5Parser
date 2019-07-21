@@ -1,0 +1,76 @@
+<?php
+
+namespace Yugeon\HTML5Parser\Tests;
+
+use PHPUnit\Framework\TestCase;
+use Yugeon\HTML5Parser\NodeCollection;
+use Yugeon\HTML5Parser\Node;
+
+class NodeCollectionTest extends TestCase {
+
+    private $testClass;
+
+    function setUp() {
+        $this->testClass = new NodeCollection();
+    }
+
+    public function testClassCanBeInstantiated() {
+        $this->assertTrue(is_object($this->testClass));
+    }
+
+    public function testObjectIsOfCorrectType() {
+        $this->assertTrue(get_class($this->testClass) == 'Yugeon\HTML5Parser\NodeCollection');
+    }
+
+    public function testCanAddNodeToCollection()
+    {
+        $node = new Node();
+        $this->assertTrue($this->testClass->addNode($node));
+        $this->assertCount(1, $this->testClass);
+    }
+
+    public function testCanFillCollectionFromConstructor()
+    {
+        $nodes = [
+            $a = new Node(),
+            $b = new Node(),
+            $c = new Node(),
+        ];
+
+        $this->testClass = new NodeCollection($nodes);
+        $this->assertCount(3, $this->testClass);
+        $this->assertEquals($b, $this->testClass->item(1));
+    }
+
+    public function testCanConvertStringsToNodesInConstructor()
+    {
+        $nodes = [
+            $a = '<div>Hello',
+            $b = new Node(),
+            $c = new Node(),
+        ];
+
+        $this->testClass = new NodeCollection($nodes);
+        $this->assertEquals('div', $this->testClass->item(0)->getTagName());
+    }
+
+    public function testCanIgnoreNotStringAndNotNodeItemsInConstructor()
+    {
+        $nodes = [
+            $a = '<div>Hello',
+            $b = 1,
+            $c = new NodeCollection(),
+        ];
+
+        $this->testClass = new NodeCollection($nodes);
+        $this->assertCount(1, $this->testClass);
+    }
+
+    public function testCanGetNodeItemByIndex()
+    {
+        $node = new Node();
+        $this->testClass->addNode($node);
+        $this->assertEquals($node, $this->testClass->item(0));
+    }
+
+}

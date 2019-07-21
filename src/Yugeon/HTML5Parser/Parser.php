@@ -2,6 +2,8 @@
 
 namespace Yugeon\HTML5Parser;
 
+use Yugeon\HTML5Parser\NodeCollection;
+
 class Parser
 {
     const REMOVED_SCRIPTS_TEMPLATE = 'XRMG83jy_';
@@ -9,8 +11,8 @@ class Parser
     /** @var string */
     protected $html = '';
 
-    /** @var string[] */
-    protected $nodes = [];
+    /** @var NodeCollection */
+    protected $nodes = null;
 
      /**
      * Array of contents from removed scripts
@@ -33,7 +35,7 @@ class Parser
 
         if (false !== preg_match_all('#(?:<!--.*?-->|<[^>]+>[^<]*)#i', $html, $matches)) {
             if (isset($matches[0])) {
-                $this->nodes = $matches[0];
+                $this->nodes = new NodeCollection($matches[0]);
             }
         }
 
