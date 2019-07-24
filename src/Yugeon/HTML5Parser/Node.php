@@ -2,8 +2,6 @@
 
 namespace Yugeon\HTML5Parser;
 
-use phpDocumentor\Reflection\Types\Boolean;
-
 class Node
 {
     /** @var string */
@@ -15,10 +13,10 @@ class Node
     /** @var int */
     public $level = 0;
 
-    /** @var Boolean */
+    /** @var bool */
     public $isStartTag = false;
 
-    /** @var Boolean */
+    /** @var bool */
     public $isEndTag = false;
 
     protected $whitespacesBeforeTag = '';
