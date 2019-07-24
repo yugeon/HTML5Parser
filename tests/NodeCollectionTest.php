@@ -73,4 +73,39 @@ class NodeCollectionTest extends TestCase {
         $this->assertEquals($node, $this->testClass->item(0));
     }
 
+    public function testCanAddNodesToCollection()
+    {
+        $nodes = [
+            $a = new Node(),
+            $b = new Node(),
+            $c = new Node(),
+        ];
+        $this->testClass->addNodes($nodes);
+        $this->assertEquals($b, $this->testClass->item(0));
+        $this->assertCount(3, $this->testClass);
+    }
+
+    public function testCanSetGetLevelNodesInCollection()
+    {
+        $level = 1;
+        $this->testClass->setLevel($level);
+        $this->assertEquals($level, $this->testClass->getLevel());
+    }
+
+    public function testAllNodesInCollectionMustBeInSameLevel()
+    {
+        $level = 1;
+        $nodes = [
+            $a = new Node(),
+            $b = new Node(),
+            $c = new Node(),
+        ];
+
+        $this->testClass->setLevel($level);
+        $this->testClass->addNodes($nodes);
+        $this->assertEquals($level, $this->testClass->item(0)->getLevel());
+        $this->assertEquals($level, $this->testClass->item(1)->getLevel());
+        $this->assertEquals($level, $this->testClass->item(2)->getLevel());
+    }
+
 }

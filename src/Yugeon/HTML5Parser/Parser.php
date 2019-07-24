@@ -3,6 +3,7 @@
 namespace Yugeon\HTML5Parser;
 
 use Yugeon\HTML5Parser\NodeCollection;
+use Yugeon\HTML5Parser\Node;
 
 class Parser
 {
@@ -35,11 +36,25 @@ class Parser
 
         if (false !== preg_match_all('#(?:<!--.*?-->|<[^>]+>[^<]*)#i', $html, $matches)) {
             if (isset($matches[0])) {
-                $this->nodes = new NodeCollection($matches[0]);
+                $this->nodes = new NodeCollection();
+                $this->buildNodesTree($matches[0]);
             }
         }
 
         return $this;
+    }
+
+    public function buildNodesTree($nodes = [])
+    {
+        $this->nodes = new NodeCollection();
+
+        foreach ($nodes as $node) {
+            $node = new Node($node);
+
+            if ($node instanceof Node) {
+                $this->nodes->addNode($node);
+            }
+        }
     }
 
     public function getHtml()

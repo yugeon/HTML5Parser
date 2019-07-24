@@ -88,7 +88,7 @@ class ParserTest extends TestCase {
         $nodes = $this->testClass->getNodes();
         $this->assertEquals(0, $nodes->item(0)->getLevel()); // <div>
         $this->assertEquals(1, $nodes->item(1)->getLevel()); // <p>
-        $this->assertEquals(1, $nodes->item(1)->getLevel()); // </p>
+        $this->assertEquals(1, $nodes->item(2)->getLevel()); // </p>
     }
 
 }

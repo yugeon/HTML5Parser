@@ -12,7 +12,7 @@ class ParserTest extends TestCase {
     static private $testContent;
 
     static function setUpBeforeClass() {
-        self::$testContent = file_get_contents(__DIR__ . '/../assets/dolls.html');
+        self::$testContent = file_get_contents(__DIR__ . '/../assets/ralph.html');
     }
 
     // function setUp() {

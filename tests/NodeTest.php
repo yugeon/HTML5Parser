@@ -35,6 +35,119 @@ class NodeTest extends TestCase {
         $this->assertEquals('div', $this->testClass->getTagName());
     }
 
+    public function testCanInitFromSeparateMethod()
+    {
+        $htmlNode = '<div>hello';
+        $this->testClass->parse($htmlNode);
+        $this->assertEquals('div', $this->testClass->getTagName());
+        $this->assertTrue($this->testClass->isStartTag);
+    }
+
+    public function testMustClearObjectBeforeParse()
+    {
+        $this->assertFalse($this->testClass->isStartTag);
+        $this->assertFalse($this->testClass->isEndTag);
+
+        $htmlNode = '<div>hello';
+        $this->testClass->parse($htmlNode);
+        $this->assertTrue($this->testClass->isStartTag);
+        $this->assertFalse($this->testClass->isEndTag);
+
+        $htmlNode = '</div>hello';
+        $this->testClass->parse($htmlNode);
+        $this->assertFalse($this->testClass->isStartTag);
+        $this->assertTrue($this->testClass->isEndTag);
+    }
+
+    public function testCanParseEndTag()
+    {
+        $htmlNode = '</div>hello';
+        $this->testClass->parse($htmlNode);
+        $this->assertEquals('div', $this->testClass->getTagName());
+        $this->assertTrue($this->testClass->isEndTag);
+    }
+
+    public function testCanParseComments()
+    {
+        $htmlNode = '<!-- abrakadabra -->';
+        $this->testClass->parse($htmlNode);
+        $this->assertEquals('!--', $this->testClass->getTagName());
+        $this->assertTrue($this->testClass->isComment());
+    }
+
+    public function testCanParseDoctype()
+    {
+        $htmlNode = '<!DOCTYPE html>';
+        $this->testClass->parse($htmlNode);
+        $this->assertEquals('!DOCTYPE', $this->testClass->getTagName());
+        $this->assertTrue($this->testClass->isDoctype());
+    }
+
+    // TODO: add tests for custom tags that can also be self-closing.
+
+    public function testCanParseTagsWithWhitespaces()
+    {
+        $htmlNode = '</   div  >hello';
+        $this->testClass->parse($htmlNode);
+        $this->assertEquals('div', $this->testClass->getTagName());
+        $this->assertTrue($this->testClass->isEndTag);
+    }
+
+    public function testCanParseSelfClosingTags()
+    {
+        $htmlNode = '<br />';
+        $this->testClass->parse($htmlNode);
+        $this->assertEquals('br', $this->testClass->getTagName());
+        $this->assertTrue($this->testClass->isStartTag);
+        $this->assertTrue($this->testClass->isSelfClosingTag());
+    }
+
+    public function testCanRestoreOriginalStartTag()
+    {
+        $html = '<div>Hello world';
+        $this->testClass->parse($html);
+        $this->assertEquals($html, $this->testClass->getHtml());
+    }
+
+    public function testCanRestoreOriginalEndTag()
+    {
+        $html = '</div>Hello world';
+        $this->testClass->parse($html);
+        $this->assertEquals($html, $this->testClass->getHtml());
+    }
+
+    public function testCanRestoreOriginalSelfClosingTag()
+    {
+        $html = '<br/> Hello world';
+        $this->testClass->parse($html);
+        $this->assertEquals($html, $this->testClass->getHtml());
+
+        $html = '<BR> Hello world';
+        $this->testClass->parse($html);
+        $this->assertEquals($html, $this->testClass->getHtml());
+    }
+
+    public function testCanRestoreOriginalDoctype()
+    {
+        $html = '<!Doctype html>';
+        $this->testClass->parse($html);
+        $this->assertEquals($html, $this->testClass->getHtml());
+    }
+
+    public function testCanRestoreOriginalComment()
+    {
+        $html = '<!-- any beny -->allo';
+        $this->testClass->parse($html);
+        $this->assertEquals($html, $this->testClass->getHtml());
+    }
+
+    public function testCanRestoreOriginalTagWithWhitespaces()
+    {
+        $html = "< \n  div >allo";
+        $this->testClass->parse($html);
+        $this->assertEquals($html, $this->testClass->getHtml());
+    }
+
     public function testCanSetGetNestingLevel()
     {
         $level = 2;
