@@ -81,6 +81,7 @@ class ParserTest extends TestCase {
         $this->testClass = new Parser();
         $this->testClass->parse(static::$testContent);
         dump('This Parser', $this->testClass->getWorkTime());
+        file_put_contents(__DIR__ . '/../assets/output.html', $this->testClass->getHtml());
     }
 
 }

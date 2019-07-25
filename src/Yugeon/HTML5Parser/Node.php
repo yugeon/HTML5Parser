@@ -10,6 +10,12 @@ class Node
     /** @var string */
     protected $tagName = '';
 
+    /** @var Node */
+    protected $parentNode = null;
+
+    /** @var NodeCollection */
+    protected $childs = null;
+
     /** @var int */
     public $level = 0;
 
@@ -22,7 +28,6 @@ class Node
     protected $whitespacesBeforeTag = '';
     protected $attributesStr = '';
     protected $textValue = '';
-
 
     // http://xahlee.info/js/html5_non-closing_tag.html
     protected $selfClosingTags = [
@@ -43,10 +48,13 @@ class Node
         'command',
         'keygen',
         'menuitem',
+        '!--',
+        '!doctype',
     ];
 
     public function __construct($stringValue = '')
     {
+        $this->clear();
         $this->parse($stringValue);
     }
 
@@ -64,6 +72,8 @@ class Node
         $this->whitespacesBeforeTag = '';
         $this->attributesStr = '';
         $this->textValue = '';
+        $this->parentNode = null;
+        $this->childs = new NodeCollection();
     }
 
     protected function parseStringTag($stringValue)
@@ -72,7 +82,7 @@ class Node
             return;
         }
 
-        if (false !== preg_match('#<(/?)(\s*)([^>\s]+|!--)([^>]*)>(.*)#i', $stringValue, $matches)) {
+        if (false !== preg_match('#<(/?)(\s*)(!--|[^>\s]+)([^>]*)>(.*)#is', $stringValue, $matches)) {
             if (!empty($matches[1])) {
                 $this->isEndTag = true;
             } else {
@@ -109,6 +119,16 @@ class Node
 
     public function getHtml()
     {
+        $html = $this->_getSelfHtml();
+        foreach ($this->getChilds() as $node) {
+            $html .= $node->getHtml();
+        }
+
+        return $html;
+    }
+
+    protected function _getSelfHtml()
+    {
         return
             "<" . ($this->isEndTag ? '/' : '') .
             $this->whitespacesBeforeTag .
@@ -116,6 +136,38 @@ class Node
             $this->attributesStr .
             '>' .
             $this->textValue;
+    }
+
+    public function setParent($node)
+    {
+        if ($node instanceof Node) {
+            $this->parentNode = $node;
+        }
+    }
+
+    public function getParent()
+    {
+        return $this->parentNode;
+    }
+
+    public function addNode($node)
+    {
+        $this->childs->addNode($node);
+        $node->setParent($this);
+    }
+
+    public function addNodes($nodes)
+    {
+        foreach ($nodes as $node) {
+            if ($node instanceof Node) {
+                $this->addNode($node);
+            }
+        }
+    }
+
+    public function getChilds()
+    {
+        return $this->childs;
     }
 
     public function setLevel($level)
@@ -130,6 +182,6 @@ class Node
 
     public function __toString()
     {
-        return $this->stringValue;
+        return $this->getHtml();
     }
 }

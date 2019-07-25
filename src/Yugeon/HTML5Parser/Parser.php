@@ -25,7 +25,6 @@ class Parser
     /** @var float */
     protected $startTime = 0;
 
-
     public function parse($html)
     {
         $this->startTime = microtime(true);
@@ -34,9 +33,8 @@ class Parser
 
         $html = $this->preserveScripts($html);
 
-        if (false !== preg_match_all('#(?:<!--.*?-->|<[^>]+>[^<]*)#i', $html, $matches)) {
+        if (false !== preg_match_all('#(?:<!--.*?-->|<[^>]+>)[^<]*#is', $html, $matches)) {
             if (isset($matches[0])) {
-                $this->nodes = new NodeCollection();
                 $this->buildNodesTree($matches[0]);
             }
         }
@@ -46,20 +44,41 @@ class Parser
 
     public function buildNodesTree($nodes = [])
     {
-        $this->nodes = new NodeCollection();
+        $root = new Node('<root>');
+        $prevNode = $root;
 
         foreach ($nodes as $node) {
             $node = new Node($node);
 
             if ($node instanceof Node) {
-                $this->nodes->addNode($node);
+
+                if ($node->isStartTag) {
+                    $prevNode->addNode($node);
+                }
+
+                if ($node->isEndTag) {
+                    $prevNode->getParent()->addNode($node);
+                }
+
+                if ($node->isEndTag || $node->isSelfClosingTag() || $node->isComment()) {
+                    $prevNode = $node->getParent();
+                } else {
+                    $prevNode = $node;
+                }
             }
         }
+
+        $this->nodes = $root->getChilds();
     }
 
     public function getHtml()
     {
-        return $this->html;
+        $html = '';
+        foreach ($this->nodes as $node) {
+            $html .= $node->getHtml();
+        }
+
+        return $this->restoreScripts($html);
     }
 
     public function getNodes()
@@ -74,7 +93,7 @@ class Parser
         $template = static::REMOVED_SCRIPTS_TEMPLATE;
         $html = preg_replace_callback("#<(script|template)\b([^>]*)>(.*?)</\\1>#is", function ($matches) use ($template, &$scriptsCnt, &$removedScripts) {
             $hash = md5($matches[3]);
-            $result = "<{$matches[1]} {$matches[2]}>{$template}{$hash}</{$matches[1]}>";
+            $result = "<{$matches[1]}{$matches[2]}>{$template}{$hash}</{$matches[1]}>";
             $removedScripts[$hash] = $matches[3];
             $scriptsCnt++;
             return $result;

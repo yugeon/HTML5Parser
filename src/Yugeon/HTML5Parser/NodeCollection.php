@@ -4,10 +4,13 @@ namespace Yugeon\HTML5Parser;
 
 use Yugeon\HTML5Parser\Node;
 
-class NodeCollection implements \Countable
+class NodeCollection implements \Countable, \IteratorAggregate
 {
     /** @var Node[] */
     protected $nodes = [];
+
+    /** @var \Traversable */
+    protected $arrayIterator = null;
 
     /** @var int */
     protected $level = 0;
@@ -40,6 +43,11 @@ class NodeCollection implements \Countable
         return isset($this->nodes[$index]) ? $this->nodes[$index] : null;
     }
 
+    public function getItems()
+    {
+        return $this->nodes;
+    }
+
     public function setLevel($level)
     {
         $this->level = $level;
@@ -57,5 +65,14 @@ class NodeCollection implements \Countable
         $node->setLevel($this->level);
 
         return true;
+    }
+
+    public function getIterator()
+    {
+        if (!$this->arrayIterator) {
+            $this->arrayIterator = new \ArrayIterator($this->nodes);
+        }
+
+        return $this->arrayIterator;
     }
 }

@@ -26,22 +26,37 @@ class ParserTest extends TestCase {
         $html = '<div><h1>Hello <br /> World</h1></div>';
         $this->testClass->parse($html);
         $this->assertEquals($html, $this->testClass->getHtml());
+        $this->assertCount(2, $this->testClass->getNodes());
     }
 
     public function testCanGetResultsOfParsingAsCollectionOfTags()
     {
         $html = '<div><h1>Hello <br /> World</h1></div>';
         $this->testClass->parse($html);
-        $this->assertCount(5, $this->testClass->getNodes());
+        $this->assertCount(2, $this->testClass->getNodes());
     }
 
     public function testCanConsiderComments()
     {
         $html = '<div><!--h1>Hello <br /> World</h1--></div>';
         $this->testClass->parse($html);
-        $this->assertCount(3, $this->testClass->getNodes());
+        $this->assertCount(2, $this->testClass->getNodes());
     }
 
+    public function testCanConsiderBreakLineAndWhitspaces()
+    {
+        $html = '<div>
+                    <p>Hello</p>
+                    <!-- comment -->
+                    <div>
+                        World
+                    </div>
+                </div>';
+        $this->testClass->parse($html);
+        $this->assertEquals($html, $this->testClass->getHtml());
+    }
+
+    // TODO: improve checks
     public function testCanConsiderScriptsAndTemplates()
     {
         $html = '<div>
@@ -55,7 +70,16 @@ class ParserTest extends TestCase {
                     </template>
                 </div>';
         $this->testClass->parse($html);
-        $this->assertCount(9, $this->testClass->getNodes());
+        $this->assertCount(2, $this->testClass->getNodes());
+        $this->assertEquals($html, $this->testClass->getHtml());
+    }
+
+    public function testCommentsNotCreateChildNodes()
+    {
+        $html = '<!--[if gt IE 8]><!--><html lang="en"><!--<![endif]-->
+                 </html>';
+        $this->testClass->parse($html);
+        $this->assertCount(3, $this->testClass->getNodes());
     }
 
     public function testCanGetWorkTime()
@@ -72,6 +96,7 @@ class ParserTest extends TestCase {
         $this->assertTrue(get_class($this->testClass->getNodes()) == 'Yugeon\HTML5Parser\NodeCollection');
     }
 
+    // TODO: nesting level
     public function _testGetNodeNestingLevel()
     {
         $html = '<div>

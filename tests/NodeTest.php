@@ -102,6 +102,16 @@ class NodeTest extends TestCase {
         $this->assertTrue($this->testClass->isSelfClosingTag());
     }
 
+    public function testCommentsMustBeSelfClosingTag()
+    {
+        $htmlNode = '<!--any comment-->';
+        $this->testClass->parse($htmlNode);
+        $this->assertEquals('!--', $this->testClass->getTagName());
+        $this->assertTrue($this->testClass->isStartTag);
+        $this->assertFalse($this->testClass->isEndTag);
+        $this->assertTrue($this->testClass->isSelfClosingTag());
+    }
+
     public function testCanRestoreOriginalStartTag()
     {
         $html = '<div>Hello world';
@@ -148,11 +158,72 @@ class NodeTest extends TestCase {
         $this->assertEquals($html, $this->testClass->getHtml());
     }
 
+    public function testCanRestoreOriginalHtmlWithWhitespacesInEnd(Type $var = null)
+    {
+        $html = '<div>Hello
+        ';
+        $this->testClass->parse($html);
+        $this->assertEquals($html, $this->testClass->getHtml());
+    }
+
     public function testCanSetGetNestingLevel()
     {
         $level = 2;
         $this->testClass->setLevel($level);
         $this->assertEquals($level, $this->testClass->getLevel());
     }
+
+    public function testCanSetGetParentNode()
+    {
+        $nodeA = new Node();
+        $this->testClass->setParent($nodeA);
+        $this->assertEquals($nodeA, $this->testClass->getParent());
+    }
+
+    public function testCanAddGetChildNode()
+    {
+        $childNode = new Node();
+        $this->testClass->addNode($childNode);
+        $this->assertContains($childNode, $this->testClass->getChilds()->getItems());
+    }
+
+    public function testCanAddGetChildNodes()
+    {
+        $childNodes = [
+            $a = new Node('<br>World'),
+            $b = new Node('</div>')
+        ];
+        $this->testClass->addNodes($childNodes);
+        $this->assertEquals($childNodes, $this->testClass->getChilds()->getItems());
+    }
+
+    public function testCanRestoreHtmlConsideringChildNodes()
+    {
+        $this->testClass->parse('<div>Hello');
+        $childNodes = [
+            $a = new Node('<br>World'),
+            $b = new Node('</div>')
+        ];
+        $this->testClass->addNodes($childNodes);
+        $this->assertEquals('<div>Hello<br>World</div>', $this->testClass->getHtml());
+    }
+
+    public function testMustSetCorrectParentNodeAfterAddNode()
+    {
+        $childNode = new Node();
+        $this->testClass->addNode($childNode);
+        $this->assertEquals($this->testClass, $childNode->getParent());
+    }
+
+    // public function testCanAddGetChildNodes()
+    // {
+    //     $childNodes = [
+    //         $a = new Node(),
+    //         $b = new Node(),
+    //         $c = new Node(),
+    //     ];
+    //     $this->testClass->;
+    //     $this->assertEquals($nodeA, $this->testClass->getParent());
+    // }
 
 }

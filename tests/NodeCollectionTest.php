@@ -85,6 +85,21 @@ class NodeCollectionTest extends TestCase {
         $this->assertCount(3, $this->testClass);
     }
 
+    public function testCanTraverseByCollectionAsByArray()
+    {
+        $nodes = [
+            $a = new Node(),
+            $b = new Node(),
+            $c = new Node(),
+        ];
+        $this->testClass->addNodes($nodes);
+        $i = 0;
+        foreach ($this->testClass as $node) {
+            $this->assertEquals($nodes[$i++], $node);
+        }
+        $this->assertEquals($i, 3);
+    }
+
     public function testCanSetGetLevelNodesInCollection()
     {
         $level = 1;
@@ -106,6 +121,17 @@ class NodeCollectionTest extends TestCase {
         $this->assertEquals($level, $this->testClass->item(0)->getLevel());
         $this->assertEquals($level, $this->testClass->item(1)->getLevel());
         $this->assertEquals($level, $this->testClass->item(2)->getLevel());
+    }
+
+    public function testCanGetNodeItems()
+    {
+        $nodes = [
+            $a = new Node(),
+            $b = new Node(),
+            $c = new Node(),
+        ];
+        $this->testClass->addNodes($nodes);
+        $this->assertEquals($nodes, $this->testClass->getItems());
     }
 
 }
