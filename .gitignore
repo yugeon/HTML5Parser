@@ -1,4 +1,4 @@
 vendor/*
 .composer.json.swp
 composer.phar
-tests/assests/output.html
+tests/assets/output.html
