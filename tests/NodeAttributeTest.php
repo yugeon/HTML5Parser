@@ -77,7 +77,7 @@ class NodeAttributeTest extends TestCase {
     public function testCanSelectQuotesSymbolInConstructor()
     {
         $expected = '"';
-        $this->testClass = new NodeAttribute('id', 'val', '', $expected);
+        $this->testClass = new NodeAttribute('id', 'val', '', null, $expected);
         $this->assertEquals($expected, $this->testClass->getQuotesSymbol());
     }
 
@@ -155,6 +155,13 @@ class NodeAttributeTest extends TestCase {
         $expected = ' some-id ';
         $this->testClass = new NodeAttribute($name, $expected);
         $this->assertEquals($expected, $this->testClass->getValue());
+    }
+
+    public function testCanSetSignWithPreservedWhitespaces()
+    {
+        $signStr = ' = ';
+        $this->testClass->setSignStr($signStr);
+        $this->assertEquals($signStr, $this->testClass->getSignStr());
     }
 
 }

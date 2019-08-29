@@ -16,6 +16,9 @@ class NodeAttribute
     /** @var string */
     protected $preservedWhitespace = '';
 
+    /** @var string|null */
+    protected $signStr = null;
+
     /** @var string */
     protected $quotesSymbol = '';
 
@@ -23,9 +26,9 @@ class NodeAttribute
      *
      * @param string $name
      * @param string|null $value
-     * @param string $whitespace
+     * @param string $whitespaceBefore
      */
-    public function __construct($name = '', $value = null, $whitespace = '', $quotesSymbol = '')
+    public function __construct($name = '', $value = null, $whitespaceBefore = '', $signStr = null, $quotesSymbol = '')
     {
         if (!empty($name)) {
             $this->setName($name);
@@ -35,9 +38,11 @@ class NodeAttribute
             $this->setValue($value);
         }
 
-        if (!empty($whitespace)) {
-            $this->preservedWhitespace = $whitespace;
+        if (!empty($whitespaceBefore)) {
+            $this->preservedWhitespace = $whitespaceBefore;
         }
+
+        $this->setSignStr($signStr);
 
         $this->setQuotesSymbol($quotesSymbol);
     }
@@ -82,6 +87,25 @@ class NodeAttribute
 
     /**
      *
+     * @param string|null $signStr
+     * @return void
+     */
+    public function setSignStr($signStr)
+    {
+        $this->signStr = $signStr;
+    }
+
+    /**
+     *
+     * @return string|null
+     */
+    public function getSignStr()
+    {
+        return $this->signStr;
+    }
+
+    /**
+     *
      * @param string $quotesSymbol
      * @return void
      */
@@ -117,9 +141,9 @@ class NodeAttribute
     {
         $html = $this->preservedWhitespace;
         if (!is_null($this->value)) {
-            $html .= $this->name . '=' . $this->quotesSymbol . $this->value . $this->quotesSymbol;
+            $html .= $this->name . (!is_null($this->signStr) ? $this->signStr : '=') . $this->quotesSymbol . $this->value . $this->quotesSymbol;
         } else {
-            $html .= $this->name;
+            $html .= $this->name . (!is_null($this->signStr) ? $this->signStr : '');
         }
 
         return $html;

@@ -202,8 +202,24 @@ class NodeAttributesTest extends TestCase
         }
     }
 
-    public function _testMustPreserveAttributeEqualsSignAndWhitespacesAround()
+    public function testMustPreserveAttributeEqualsSignAndWhitespacesAround()
     {
+        $attrs = [
+            'id="value"',
+            'id = "value"',
+            'id ="value"',
+            'id= "value"',
+            'id=',
+            'id =',
+            'id= ',
+            'id = ',
+        ];
+
+        foreach ($attrs as $attr) {
+            $this->testClass->clearAttributes();
+            $this->testClass->parse($attr);
+            $this->assertEquals($attr, $this->testClass->getHtml());
+        }
 
     }
 

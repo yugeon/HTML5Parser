@@ -38,7 +38,12 @@ class NodeAttributes implements \Countable, \IteratorAggregate
             return;
         }
 
-        if (false !== preg_match_all('#(?<ws>\s+)?(?<name>[^\s=\'"]+)?(\s*=\s*(?:"(?<value1>.*?)"|\'(?<value2>.*?)\'|(?<value3>[^\'">\s]+)))?#is', $attrStr, $matches, PREG_SET_ORDER)) {
+        if (false !== preg_match_all(
+            '#(?<ws>\s+)?(?<name>[^\s=\'"]+)?(?:(?<sign>\s*=\s*)(?:"(?<value1>.*?)"|\'(?<value2>.*?)\'|(?<value3>[^\'">\s]+))?)?#is',
+            $attrStr,
+            $matches,
+            PREG_SET_ORDER
+        )) {
             if (isset($matches)) {
                 $this->buildAttributes($matches);
             }
@@ -75,9 +80,10 @@ class NodeAttributes implements \Countable, \IteratorAggregate
                 $quotesSymbol = '"';
             }
 
-            $whitespace = !empty($attr['ws']) ? $attr['ws'] : '';
+            $signStr = !empty($attr['sign']) ? $attr['sign'] : null;
+            $whitespaceBefore = !empty($attr['ws']) ? $attr['ws'] : '';
 
-            $this->addAttribute(new NodeAttribute($name, $value, $whitespace, $quotesSymbol));
+            $this->addAttribute(new NodeAttribute($name, $value, $whitespaceBefore, $signStr, $quotesSymbol));
         }
     }
 

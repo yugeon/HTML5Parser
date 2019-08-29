@@ -94,7 +94,11 @@ class Node
             return;
         }
 
-        if (false !== preg_match('#<(?<end1>/)?(?<tag>[^!\s>/]+|!doctype)(?<attr>\s+(?:[^\'"/>]+|".*?"|\'.*?\')*)?(?<end2>\s*/)?>(?<html>.*)#is', $stringValue, $matches)) {
+        if (false !== preg_match(
+            '#<(?<end1>/)?(?<tag>[^!\s>/]+|!doctype)(?<attr>\s+(?:[^\'"/>]+|".*?"|\'.*?\')*)?(?<end2>\s*/)?>(?<html>.*)#is',
+            $stringValue,
+            $matches
+        )) {
             if (!empty($matches['end1'])) {
                 $this->isEndTag = true;
             } else {
@@ -147,7 +151,7 @@ class Node
 
             $this->isStartTag = true;
             $this->isEndTag = false;
-            $this->attributesStr = isset($matches['comment'])? $matches['comment'] : '';
+            $this->attributesStr = isset($matches['comment']) ? $matches['comment'] : '';
 
             if (isset($matches['html'])) {
                 $this->textValue = $matches['html'];
@@ -195,8 +199,8 @@ class Node
             "<" . ($this->isEndTag ? '/' : '') .
             $this->tagName . '' .
             $this->attributes->getHtml() .
-            ($this->isSelfClosingTag? '/' : '') .
-            ($this->isComment()? $this->attributesStr . '--' : '') .
+            ($this->isSelfClosingTag ? '/' : '') .
+            ($this->isComment() ? $this->attributesStr . '--' : '') .
             '>' .
             $this->textValue;
     }
