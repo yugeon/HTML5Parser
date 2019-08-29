@@ -41,6 +41,10 @@ class ParserTest extends TestCase {
         $html = '<div><!--h1>Hello <br /> World</h1--></div>';
         $this->testClass->parse($html);
         $this->assertCount(2, $this->testClass->getNodes());
+
+        $divNode = $this->testClass->getNodes()->item(0);
+        $commentNode = $divNode->getChilds()->item(0);
+        $this->assertEquals('!--', $commentNode->getTagName());
     }
 
     public function testCanConsiderBreakLineAndWhitspaces()
@@ -96,8 +100,7 @@ class ParserTest extends TestCase {
         $this->assertTrue(get_class($this->testClass->getNodes()) == 'Yugeon\HTML5Parser\NodeCollection');
     }
 
-    // TODO: nesting level
-    public function _testGetNodeNestingLevel()
+    public function testMustBeSetRightNestingLevel()
     {
         $html = '<div>
                     <p>Hello</p>
@@ -111,9 +114,22 @@ class ParserTest extends TestCase {
                 </div>';
         $this->testClass->parse($html);
         $nodes = $this->testClass->getNodes();
-        $this->assertEquals(0, $nodes->item(0)->getLevel()); // <div>
-        $this->assertEquals(1, $nodes->item(1)->getLevel()); // <p>
-        $this->assertEquals(1, $nodes->item(2)->getLevel()); // </p>
+        $div = $nodes->item(0);
+        $this->assertEquals(0, $div->getLevel()); // <div>
+        $this->assertEquals(1, $div->getChilds()->item(0)->getLevel()); // <p>
+        $this->assertEquals(1, $div->getChilds()->item(1)->getLevel()); // </p>
+        $this->assertEquals(1, $div->getChilds()->item(2)->getLevel()); // <!-- comment -->
     }
 
+    public function testMustCorrectParseTagsWithAnyAttributes()
+    {
+        $html = '<div class="red>green">Hello</div>';
+        $this->testClass->parse($html);
+
+        $this->assertCount(2, $this->testClass->getNodes());
+
+        $this->assertEquals('div', $this->testClass->getNodes()->item(0)->getTagName());
+        $this->assertTrue($this->testClass->getNodes()->item(1)->isEndTag);
+        $this->assertEquals($html, $this->testClass->getHtml());
+    }
 }

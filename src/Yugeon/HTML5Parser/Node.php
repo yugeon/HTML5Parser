@@ -25,8 +25,13 @@ class Node
     /** @var bool */
     public $isEndTag = false;
 
-    protected $whitespacesBeforeTag = '';
+    /** @var bool */
+    public $isSelfClosingTag = false;
+
     protected $attributesStr = '';
+
+    /** @var NodeAttributes */
+    protected $attributes = null;
     protected $textValue = '';
 
     // http://xahlee.info/js/html5_non-closing_tag.html
@@ -52,48 +57,101 @@ class Node
         '!doctype',
     ];
 
-    public function __construct($stringValue = '')
+    public function __construct($stringValue = '', $isComment = false)
     {
-        $this->clear();
-        $this->parse($stringValue);
+        $this->parse($stringValue, $isComment);
     }
 
-    public function parse($stringValue)
+    public function parse($stringValue, $isComment = false)
     {
-        $this->clear();
         $this->stringValue = $stringValue;
-        $this->parseStringTag($stringValue);
+        if ($isComment) {
+            $this->parseCommentTag($stringValue);
+        } else {
+            $this->parseStringTag($stringValue);
+        }
     }
 
     protected function clear()
     {
+        $this->tagName = '';
         $this->isStartTag = false;
         $this->isEndTag = false;
-        $this->whitespacesBeforeTag = '';
+        $this->isSelfClosingTag = false;
         $this->attributesStr = '';
         $this->textValue = '';
         $this->parentNode = null;
         $this->childs = new NodeCollection();
+        $this->attributes = new NodeAttributes();
+        $this->level = 0;
     }
 
     protected function parseStringTag($stringValue)
     {
+        $this->clear();
+
         if (empty($stringValue)) {
             return;
         }
 
-        if (false !== preg_match('#<(/?)(\s*)(!--|[^>\s]+)([^>]*)>(.*)#is', $stringValue, $matches)) {
-            if (!empty($matches[1])) {
+        if (false !== preg_match('#<(?<end1>/)?(?<tag>[^!\s>/]+|!doctype)(?<attr>\s+(?:[^\'"/>]+|".*?"|\'.*?\')*)?(?<end2>\s*/)?>(?<html>.*)#is', $stringValue, $matches)) {
+            if (!empty($matches['end1'])) {
                 $this->isEndTag = true;
             } else {
                 $this->isStartTag = true;
             }
-            $this->whitespacesBeforeTag = $matches[2];
-            $this->tagName = $matches[3];
 
-            // TODO: parse attributes
-            $this->attributesStr = $matches[4];
-            $this->textValue = $matches[5];
+            if (!empty($matches['end2'])) {
+                $this->isSelfClosingTag = true;
+            }
+
+            if (isset($matches['tag'])) {
+                $this->tagName = $matches['tag'];
+            } else {
+                // try parse as comment
+                // TODO: mb warning
+                $this->parseCommentTag($stringValue);
+                return;
+                // throw new \Exception('Seems you forgot to set the flag that this is a comment');
+            }
+
+            if (isset($matches['attr'])) {
+                $this->attributesStr = $matches['attr'];
+                if (!$this->isComment()) {
+                    $this->attributes->parse($this->attributesStr);
+                }
+            }
+
+            if (isset($matches['html'])) {
+                $this->textValue = $matches['html'];
+            }
+        }
+    }
+
+    protected function parseCommentTag($stringValue)
+    {
+        $this->clear();
+
+        if (empty($stringValue)) {
+            return;
+        }
+
+        if (false !== preg_match('#<(?<tag>!--)(?<comment>.*?)-->(?<html>.*)#is', $stringValue, $matches)) {
+            if (isset($matches['tag'])) {
+                $this->tagName = $matches['tag'];
+            } else {
+                // TODO: not comment
+                //throw new \Exception("Seems [{$stringValue}] not comment");
+                return;
+            }
+
+            $this->isStartTag = true;
+            $this->isEndTag = false;
+            $this->attributesStr = isset($matches['comment'])? $matches['comment'] : '';
+
+            if (isset($matches['html'])) {
+                $this->textValue = $matches['html'];
+            }
         }
     }
 
@@ -114,6 +172,10 @@ class Node
 
     public function isSelfClosingTag()
     {
+        if ($this->isSelfClosingTag) {
+            return true;
+        }
+
         return in_array(strtolower($this->tagName), $this->selfClosingTags);
     }
 
@@ -131,9 +193,10 @@ class Node
     {
         return
             "<" . ($this->isEndTag ? '/' : '') .
-            $this->whitespacesBeforeTag .
             $this->tagName . '' .
-            $this->attributesStr .
+            $this->attributes->getHtml() .
+            ($this->isSelfClosingTag? '/' : '') .
+            ($this->isComment()? $this->attributesStr . '--' : '') .
             '>' .
             $this->textValue;
     }
@@ -154,6 +217,7 @@ class Node
     {
         $this->childs->addNode($node);
         $node->setParent($this);
+        $node->setLevel($this->getLevel() + 1);
     }
 
     public function addNodes($nodes)
@@ -165,6 +229,10 @@ class Node
         }
     }
 
+    /**
+     *
+     * @return NodeCollection
+     */
     public function getChilds()
     {
         return $this->childs;
@@ -178,6 +246,31 @@ class Node
     public function getLevel()
     {
         return $this->level;
+    }
+
+    public function getAttributes()
+    {
+        return $this->attributes;
+    }
+
+    public function getAttribute($name)
+    {
+        return $this->attributes->getAttribute($name);
+    }
+
+    public function hasAttributes()
+    {
+        return $this->attributes->hasAttributes();
+    }
+
+    public function hasAttribute($name)
+    {
+        return $this->attributes->hasAttribute($name);
+    }
+
+    public function removeAttribute($name)
+    {
+        $this->attributes->removeAttribute($name);
     }
 
     public function __toString()

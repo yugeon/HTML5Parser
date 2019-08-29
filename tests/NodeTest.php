@@ -7,6 +7,7 @@ use Yugeon\HTML5Parser\Node;
 
 class NodeTest extends TestCase {
 
+    /** @var Node */
     private $testClass;
 
     function setUp() {
@@ -70,7 +71,7 @@ class NodeTest extends TestCase {
     public function testCanParseComments()
     {
         $htmlNode = '<!-- abrakadabra -->';
-        $this->testClass->parse($htmlNode);
+        $this->testClass->parse($htmlNode, true);
         $this->assertEquals('!--', $this->testClass->getTagName());
         $this->assertTrue($this->testClass->isComment());
     }
@@ -87,7 +88,7 @@ class NodeTest extends TestCase {
 
     public function testCanParseTagsWithWhitespaces()
     {
-        $htmlNode = '</   div  >hello';
+        $htmlNode = '</div  id="abc">hello';
         $this->testClass->parse($htmlNode);
         $this->assertEquals('div', $this->testClass->getTagName());
         $this->assertTrue($this->testClass->isEndTag);
@@ -101,6 +102,22 @@ class NodeTest extends TestCase {
         $this->assertTrue($this->testClass->isStartTag);
         $this->assertTrue($this->testClass->isSelfClosingTag());
     }
+
+    public function testCanPreserveSelfClosingSlash()
+    {
+        $htmlNode = '<br />';
+        $this->testClass->parse($htmlNode);
+        $this->assertEquals($htmlNode, $this->testClass->getHtml());
+    }
+
+    // /**
+    //  * @expectedException \Exception
+    //  */
+    // public function testMustThrowExceptionIfNodeIsCommentButCommentFlagNotSet()
+    // {
+    //     $commentNode = '<!-- any comment -->';
+    //     $this->testClass->parse($commentNode);
+    // }
 
     public function testCommentsMustBeSelfClosingTag()
     {
@@ -147,21 +164,20 @@ class NodeTest extends TestCase {
     public function testCanRestoreOriginalComment()
     {
         $html = '<!-- any beny -->allo';
-        $this->testClass->parse($html);
+        $this->testClass->parse($html, true);
         $this->assertEquals($html, $this->testClass->getHtml());
     }
 
     public function testCanRestoreOriginalTagWithWhitespaces()
     {
-        $html = "< \n  div >allo";
+        $html = '<div  id="abc" >allo';
         $this->testClass->parse($html);
         $this->assertEquals($html, $this->testClass->getHtml());
     }
 
-    public function testCanRestoreOriginalHtmlWithWhitespacesInEnd(Type $var = null)
+    public function testCanRestoreOriginalHtmlWithWhitespacesInHtml()
     {
-        $html = '<div>Hello
-        ';
+        $html = "<div>Hello \t\n";
         $this->testClass->parse($html);
         $this->assertEquals($html, $this->testClass->getHtml());
     }
@@ -197,6 +213,18 @@ class NodeTest extends TestCase {
         $this->assertEquals($childNodes, $this->testClass->getChilds()->getItems());
     }
 
+    public function testChildNodesMustBeUpperLevelThanNode()
+    {
+        $level = 3;
+        $this->testClass->setLevel($level);
+        $childNodes = [
+            $a = new Node('<br>World'),
+            $b = new Node('</div>')
+        ];
+        $this->testClass->addNodes($childNodes);
+        $this->assertEquals($level + 1, $this->testClass->getChilds()->item(1)->getLevel());
+    }
+
     public function testCanRestoreHtmlConsideringChildNodes()
     {
         $this->testClass->parse('<div>Hello');
@@ -215,15 +243,48 @@ class NodeTest extends TestCase {
         $this->assertEquals($this->testClass, $childNode->getParent());
     }
 
-    // public function testCanAddGetChildNodes()
-    // {
-    //     $childNodes = [
-    //         $a = new Node(),
-    //         $b = new Node(),
-    //         $c = new Node(),
-    //     ];
-    //     $this->testClass->;
-    //     $this->assertEquals($nodeA, $this->testClass->getParent());
-    // }
+
+
+    public function testCanParseTagsWithAnyAttributes()
+    {
+        $html = '<div class="red>green">Hello';
+        $this->testClass->parse($html);
+        $this->assertEquals('div', $this->testClass->getTagName());
+        $this->assertEmpty($this->testClass->getChilds());
+        $this->assertEquals($html, $this->testClass->getHtml());
+
+    }
+
+    public function testCanParseAttributes()
+    {
+        $this->testClass->parse('<div id="2" class="red" custom-attr=\'hello world\'>!--Hello world !doctype');
+        $this->assertCount(3, $this->testClass->getAttributes());
+    }
+
+    public function testCanCheckIfNodeHasAttributes()
+    {
+        $this->testClass->parse('<div id="2" class="red" custom-attr=\'hello world\'>!--Hello world !doctype');
+        $this->assertTrue($this->testClass->hasAttributes());
+    }
+
+    public function testCanCheckIfNodeHasSpecificAttribute()
+    {
+        $this->testClass->parse('<div id="2" class="red" custom-attr=\'hello world\'>!--Hello world !doctype');
+        $this->assertTrue($this->testClass->hasAttribute('class'));
+        $this->assertFalse($this->testClass->hasAttribute('not-attr'));
+    }
+
+    public function testCanGetNodeSpecificAttribute()
+    {
+        $this->testClass->parse('<div id="2" class="red" custom-attr=\'hello world\'>!--Hello world !doctype');
+        $this->assertEquals('2', $this->testClass->getAttribute('id')->getValue());
+    }
+
+    public function testCanRemoveNodeSpecificAttribute()
+    {
+        $this->testClass->parse('<div id="2" class="red" custom-attr=\'hello world\'>!--Hello world !doctype');
+        $this->testClass->removeAttribute('id');
+        $this->assertFalse($this->testClass->hasAttribute('id'));
+    }
 
 }

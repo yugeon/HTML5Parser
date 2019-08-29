@@ -33,9 +33,11 @@ class Parser
 
         $html = $this->preserveScripts($html);
 
-        if (false !== preg_match_all('#(?:<!--.*?-->|<[^>]+>)[^<]*#is', $html, $matches)) {
-            if (isset($matches[0])) {
-                $this->buildNodesTree($matches[0]);
+        if (false !== preg_match_all('#(?:(?<comment><!--.*?-->)|(?<node><(?:[^\'">]+|".*?"|\'.*?\')+>))(?<html>[^<]*)#is', $html, $matches, PREG_SET_ORDER)) {
+        // if (false !== preg_match_all('#(?:<!--.*?-->|(?:<(?:[^\'">]+|".*?"|\'.*?\')+>))[^<]*#is', $html, $matches)) {
+        // if (false !== preg_match_all('#(?:<!--.*?-->|<[^>]+>)[^<]*#is', $html, $matches)) {
+            if (isset($matches)) {
+                $this->buildNodesTree($matches);
             }
         }
 
@@ -45,10 +47,24 @@ class Parser
     public function buildNodesTree($nodes = [])
     {
         $root = new Node('<root>');
+        $root->setLevel(-1);
         $prevNode = $root;
 
         foreach ($nodes as $node) {
-            $node = new Node($node);
+            $isComment = false;
+            if (!empty($node['node'])) {
+                $nodeStr = $node['node'];
+            } else if(isset($node['comment'])) {
+                $nodeStr = $node['comment'];
+                $isComment = true;
+            } else {
+                // TODO: warning unusual situation
+                continue;
+            }
+
+            $nodeStr .= isset($node['html'])? $node['html'] : '';
+
+            $node = new Node($nodeStr, $isComment);
 
             if ($node instanceof Node) {
 
