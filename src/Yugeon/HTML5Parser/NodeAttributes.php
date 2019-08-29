@@ -48,6 +48,7 @@ class NodeAttributes implements \Countable, \IteratorAggregate
     protected function buildAttributes($attrs)
     {
         foreach ($attrs as $attr) {
+            // process first or last whitespaces
             if (!isset($attr['name'])) {
                 if (!empty($attr['ws'])) {
                     if ($this->hasAttributes()) {
@@ -58,14 +59,25 @@ class NodeAttributes implements \Countable, \IteratorAggregate
                 }
                 continue;
             }
+
             $name = $attr['name'];
-            $value = isset($attr['value1']) ? $attr['value1'] :
-                        (isset($attr['value2']) ? $attr['value2'] :
-                            (isset($attr['value3']) ? $attr['value3'] : ''));
+
+            $quotesSymbol = '';
+            $value = null;
+            if (isset($attr['value3'])) {
+                $value = $attr['value3'];
+                $quotesSymbol = '';
+            } else if (isset($attr['value2'])) {
+                $value = $attr['value2'];
+                $quotesSymbol = '\'';
+            } else if (isset($attr['value1'])) {
+                $value = $attr['value1'];
+                $quotesSymbol = '"';
+            }
 
             $whitespace = !empty($attr['ws']) ? $attr['ws'] : '';
 
-            $this->addAttribute(new NodeAttribute($name, $value, $whitespace));
+            $this->addAttribute(new NodeAttribute($name, $value, $whitespace, $quotesSymbol));
         }
     }
 
@@ -116,6 +128,17 @@ class NodeAttributes implements \Countable, \IteratorAggregate
                 unset($this->attributes[$key]);
             }
         }
+
+        if (!$this->hasAttributes()) {
+            $this->clearAttributes();
+        }
+    }
+
+    public function clearAttributes()
+    {
+        $this->attributes = [];
+        $this->beginPreservedWhitespace = '';
+        $this->endPreservedWhitespace = '';
     }
 
     public function getHtml()

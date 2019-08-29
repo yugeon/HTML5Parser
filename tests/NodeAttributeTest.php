@@ -52,11 +52,49 @@ class NodeAttributeTest extends TestCase {
         $this->assertEquals($attributeValue, $this->testClass->getValue());
     }
 
+    public function testCanSelectQuoteSymbol()
+    {
+        $quotesSymbols = [
+            '',
+            '"',
+            "'",
+            ';'
+        ];
+
+        $expectedQuotes = [
+            '',
+            '"',
+            "'",
+            ''
+        ];
+
+        foreach ($quotesSymbols as $index => $quotesSymbol) {
+            $this->testClass->setQuotesSymbol($quotesSymbol);
+            $this->assertEquals($expectedQuotes[$index], $this->testClass->getQuotesSymbol());
+        }
+    }
+
+    public function testCanSelectQuotesSymbolInConstructor()
+    {
+        $expected = '"';
+        $this->testClass = new NodeAttribute('id', 'val', '', $expected);
+        $this->assertEquals($expected, $this->testClass->getQuotesSymbol());
+    }
+
     public function testAttributeCanBeEmpty()
     {
-        $attributeValue = '';
-        $this->testClass->setValue($attributeValue);
-        $this->assertEquals($attributeValue, $this->testClass->getValue());
+        $emptyValues = [
+            '',
+            0,
+            '0',
+            ' ',
+            null
+        ];
+
+        foreach ($emptyValues as $value) {
+            $this->testClass->setValue($value);
+            $this->assertEquals($value, $this->testClass->getValue());
+        }
     }
 
     public function testCanGetHtml()
@@ -64,7 +102,34 @@ class NodeAttributeTest extends TestCase {
         $name = 'id';
         $value = 'some-id';
         $this->testClass = new NodeAttribute($name, $value);
-        $this->assertEquals("{$name}=\"{$value}\"", $this->testClass->getHtml());
+        $this->assertEquals("{$name}={$value}", $this->testClass->getHtml());
+    }
+
+    public function testCanGetHtmlWithEmptyValue()
+    {
+        $emptyValues = [
+            '',
+            0,
+            '0',
+            ' ',
+            null
+        ];
+
+        $expectedHtml = [
+            'id=""',
+            'id="0"',
+            'id="0"',
+            'id=" "',
+            'id',
+        ];
+
+        $this->testClass->setName('id');
+        $this->testClass->setQuotesSymbol('"');
+
+        foreach ($emptyValues as $index => $value) {
+            $this->testClass->setValue($value);
+            $this->assertEquals($expectedHtml[$index], $this->testClass->getHtml());
+        }
     }
 
     public function testCanGetHtmlWithWhitespace()
@@ -73,7 +138,23 @@ class NodeAttributeTest extends TestCase {
         $value = 'some-id';
         $ws = '  ';
         $this->testClass = new NodeAttribute($name, $value, $ws);
-        $this->assertEquals("{$ws}{$name}=\"{$value}\"", $this->testClass->getHtml());
+        $this->assertEquals("{$ws}{$name}={$value}", $this->testClass->getHtml());
+    }
+
+    public function testMustPreservQuotes()
+    {
+        $name = 'id';
+        $value = '" some-id "';
+        $this->testClass = new NodeAttribute($name, $value);
+        $this->assertEquals("{$name}={$value}", $this->testClass->getHtml());
+    }
+
+    public function testMustReturnValueWithoutQuotes()
+    {
+        $name = 'id';
+        $expected = ' some-id ';
+        $this->testClass = new NodeAttribute($name, $expected);
+        $this->assertEquals($expected, $this->testClass->getValue());
     }
 
 }

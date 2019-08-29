@@ -132,4 +132,14 @@ class ParserTest extends TestCase {
         $this->assertTrue($this->testClass->getNodes()->item(1)->isEndTag);
         $this->assertEquals($html, $this->testClass->getHtml());
     }
+
+    public function testMustPreservWhitespacesBeforeDoctype()
+    {
+        $html = '
+            <!doctype html>
+            <html></html>
+        ';
+        $this->testClass->parse($html);
+        $this->assertEquals($html, $this->testClass->getHtml());
+    }
 }

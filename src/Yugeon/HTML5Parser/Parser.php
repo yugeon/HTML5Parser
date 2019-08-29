@@ -9,9 +9,6 @@ class Parser
 {
     const REMOVED_SCRIPTS_TEMPLATE = 'XRMG83jy_';
 
-    /** @var string */
-    protected $html = '';
-
     /** @var NodeCollection */
     protected $nodes = null;
 
@@ -25,12 +22,14 @@ class Parser
     /** @var float */
     protected $startTime = 0;
 
+    /** @var string */
+    protected $preservedDocumentWhitespaces = '';
+
     public function parse($html)
     {
         $this->startTime = microtime(true);
 
-        $this->html = $html;
-
+        $this->preservDocumentWhitespaces($html);
         $html = $this->preserveScripts($html);
 
         if (false !== preg_match_all('#(?:(?<comment><!--.*?-->)|(?<node><(?:[^\'">]+|".*?"|\'.*?\')+>))(?<html>[^<]*)#is', $html, $matches, PREG_SET_ORDER)) {
@@ -89,7 +88,7 @@ class Parser
 
     public function getHtml()
     {
-        $html = '';
+        $html = $this->preservedDocumentWhitespaces;
         foreach ($this->nodes as $node) {
             $html .= $node->getHtml();
         }
@@ -100,6 +99,15 @@ class Parser
     public function getNodes()
     {
         return $this->nodes;
+    }
+
+    protected function preservDocumentWhitespaces($html) {
+        $firstTagPos = strpos($html, '<');
+        if (false !== $firstTagPos && 0 !== $firstTagPos) {
+            $this->preservedDocumentWhitespaces = substr($html, 0, $firstTagPos);
+        } else {
+            $this->preservedDocumentWhitespaces = '';
+        }
     }
 
     protected function preserveScripts($html)
