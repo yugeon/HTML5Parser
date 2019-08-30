@@ -88,10 +88,10 @@ class NodeTest extends TestCase {
 
     public function testCanParseTagsWithWhitespaces()
     {
-        $htmlNode = '</div  id="abc">hello';
+        $htmlNode = '<div  id="abc">hello';
         $this->testClass->parse($htmlNode);
         $this->assertEquals('div', $this->testClass->getTagName());
-        $this->assertTrue($this->testClass->isEndTag);
+        $this->assertTrue($this->testClass->isStartTag);
     }
 
     public function testCanParseSelfClosingTags()
@@ -110,20 +110,12 @@ class NodeTest extends TestCase {
         $this->assertEquals($htmlNode, $this->testClass->getHtml());
     }
 
-    // /**
-    //  * @expectedException \Exception
-    //  */
-    // public function testMustThrowExceptionIfNodeIsCommentButCommentFlagNotSet()
-    // {
-    //     $commentNode = '<!-- any comment -->';
-    //     $this->testClass->parse($commentNode);
-    // }
-
     public function testCommentsMustBeSelfClosingTag()
     {
         $htmlNode = '<!--any comment-->';
         $this->testClass->parse($htmlNode);
         $this->assertEquals('!--', $this->testClass->getTagName());
+        $this->assertTrue($this->testClass->isComment());
         $this->assertTrue($this->testClass->isStartTag);
         $this->assertFalse($this->testClass->isEndTag);
         $this->assertTrue($this->testClass->isSelfClosingTag());
@@ -194,6 +186,26 @@ class NodeTest extends TestCase {
         $nodeA = new Node();
         $this->testClass->setParent($nodeA);
         $this->assertEquals($nodeA, $this->testClass->getParent());
+    }
+
+    public function testCanCloseNodeByOtherNode()
+    {
+        $startNode = new Node('<span>Hello');
+        $endNode = new Node('</span>world');
+        $startNode->addEndNode($endNode);
+
+        $this->assertEquals($endNode, $startNode->getEndNode());
+    }
+
+    public function testCanRestoreHtmlConsideringEndNode()
+    {
+        $startTag = '<span>Hello';
+        $endTag = '</span>world';
+        $startNode = new Node($startTag);
+        $endNode = new Node($endTag);
+        $startNode->addEndNode($endNode);
+
+        $this->assertEquals($startTag . $endTag, $startNode->getHtml());
     }
 
     public function testCanAddGetChildNode()

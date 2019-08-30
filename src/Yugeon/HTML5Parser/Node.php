@@ -13,6 +13,9 @@ class Node
     /** @var Node */
     protected $parentNode = null;
 
+    /** @var Node */
+    protected $endNode = null;
+
     /** @var NodeCollection */
     protected $childs = null;
 
@@ -190,6 +193,8 @@ class Node
             $html .= $node->getHtml();
         }
 
+        $html .= ($this->endNode ? $this->endNode->getHtml() : '');
+
         return $html;
     }
 
@@ -217,6 +222,12 @@ class Node
         return $this->parentNode;
     }
 
+    /**
+     * Add child node
+     *
+     * @param  Node $node
+     * @return void
+     */
     public function addNode($node)
     {
         $this->childs->addNode($node);
@@ -224,6 +235,12 @@ class Node
         $node->setLevel($this->getLevel() + 1);
     }
 
+    /**
+     * Add child nodes
+     *
+     * @param Node[] $nodes
+     * @return void
+     */
     public function addNodes($nodes)
     {
         foreach ($nodes as $node) {
@@ -234,6 +251,28 @@ class Node
     }
 
     /**
+     * Add end node
+     *
+     * @param Node $node
+     * @return void
+     */
+    public function addEndNode($node)
+    {
+        $this->endNode = $node;
+        $this->endNode->setParent($this);
+        $this->endNode->setLevel($this->getLevel());
+    }
+
+    /**
+     *
+     * @return Node|null
+     */
+    public function getEndNode()
+    {
+        return $this->endNode;
+    }
+
+    /**
      *
      * @return NodeCollection
      */
@@ -241,6 +280,8 @@ class Node
     {
         return $this->childs;
     }
+
+    // TODO: methods work around child nodes
 
     public function setLevel($level)
     {

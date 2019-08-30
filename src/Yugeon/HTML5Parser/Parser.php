@@ -12,7 +12,10 @@ class Parser
     /** @var NodeCollection */
     protected $nodes = null;
 
-     /**
+    /** @var Node */
+    protected $rootNode = null;
+
+    /**
      * Array of contents from removed scripts
      *
      * @var string[]
@@ -33,8 +36,6 @@ class Parser
         $html = $this->preserveScripts($html);
 
         if (false !== preg_match_all('#(?:(?<comment><!--.*?-->)|(?<node><(?:[^\'">]+|".*?"|\'.*?\')+>))(?<html>[^<]*)#is', $html, $matches, PREG_SET_ORDER)) {
-        // if (false !== preg_match_all('#(?:<!--.*?-->|(?:<(?:[^\'">]+|".*?"|\'.*?\')+>))[^<]*#is', $html, $matches)) {
-        // if (false !== preg_match_all('#(?:<!--.*?-->|<[^>]+>)[^<]*#is', $html, $matches)) {
             if (isset($matches)) {
                 $this->buildNodesTree($matches);
             }
@@ -47,13 +48,13 @@ class Parser
     {
         $root = new Node('<root>');
         $root->setLevel(-1);
-        $prevNode = $root;
+        $parentNode = $root;
 
         foreach ($nodes as $node) {
             $isComment = false;
             if (!empty($node['node'])) {
                 $nodeStr = $node['node'];
-            } else if(isset($node['comment'])) {
+            } else if (isset($node['comment'])) {
                 $nodeStr = $node['comment'];
                 $isComment = true;
             } else {
@@ -61,28 +62,30 @@ class Parser
                 continue;
             }
 
-            $nodeStr .= isset($node['html'])? $node['html'] : '';
-
+            $nodeStr .= isset($node['html']) ? $node['html'] : '';
             $node = new Node($nodeStr, $isComment);
 
             if ($node instanceof Node) {
 
                 if ($node->isStartTag) {
-                    $prevNode->addNode($node);
+                    $parentNode->addNode($node);
                 }
 
                 if ($node->isEndTag) {
-                    $prevNode->getParent()->addNode($node);
+                    $parentNode->addEndNode($node);
                 }
 
-                if ($node->isEndTag || $node->isSelfClosingTag() || $node->isComment()) {
-                    $prevNode = $node->getParent();
+                if ($node->isSelfClosingTag() || $node->isComment()) {
+                    $parentNode = $node->getParent();
+                } else if ($node->isEndTag) {
+                    $parentNode = $parentNode->getParent();
                 } else {
-                    $prevNode = $node;
+                    $parentNode = $node;
                 }
             }
         }
 
+        $this->rootNode = $root;
         $this->nodes = $root->getChilds();
     }
 
@@ -96,12 +99,28 @@ class Parser
         return $this->restoreScripts($html);
     }
 
+    /**
+     * Return result of parsing as root node
+     *
+     * @return Node|null
+     */
+    public function getRootNode()
+    {
+        return $this->rootNode;
+    }
+
+    /**
+     * Return result of parsing as collection of nodes
+     *
+     * @return NodeCollection|null
+     */
     public function getNodes()
     {
         return $this->nodes;
     }
 
-    protected function preservDocumentWhitespaces($html) {
+    protected function preservDocumentWhitespaces($html)
+    {
         $firstTagPos = strpos($html, '<');
         if (false !== $firstTagPos && 0 !== $firstTagPos) {
             $this->preservedDocumentWhitespaces = substr($html, 0, $firstTagPos);
