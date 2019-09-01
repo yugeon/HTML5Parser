@@ -22,6 +22,11 @@ class NodeAttributeTest extends TestCase {
         $this->assertTrue(get_class($this->testClass) == 'Yugeon\HTML5Parser\NodeAttribute');
     }
 
+    public function testMustImplementNodeAttributeInterface()
+    {
+        $this->assertInstanceOf('Yugeon\Html5Parser\NodeAttributeInterface', $this->testClass);
+    }
+
     public function testCanSetGetAttributeName()
     {
         $attributeName = 'class';

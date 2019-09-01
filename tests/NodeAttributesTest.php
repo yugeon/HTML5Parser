@@ -3,8 +3,10 @@
 namespace Yugeon\HTML5Parser\Tests;
 
 use PHPUnit\Framework\TestCase;
+use stdClass;
 use Yugeon\HTML5Parser\NodeAttributes;
 use Yugeon\HTML5Parser\NodeAttribute;
+use Yugeon\HTML5Parser\NodeAttributeInterface;
 
 class NodeAttributesTest extends TestCase
 {
@@ -27,10 +29,22 @@ class NodeAttributesTest extends TestCase
         $this->assertTrue(get_class($this->testClass) == 'Yugeon\HTML5Parser\NodeAttributes');
     }
 
+    public function testMustImplementNodeAttributesInterface()
+    {
+        $this->assertInstanceOf('Yugeon\Html5Parser\NodeAttributesInterface', $this->testClass);
+    }
+
     public function testCanAddAttributeToCollection()
     {
         $attr = new NodeAttribute();
         $this->assertEquals($this->testClass, $this->testClass->addAttribute($attr));
+        $this->assertCount(1, $this->testClass);
+    }
+
+    public function testCanAddAttributeAsString()
+    {
+        $attrStr = 'id = "value"';
+        $this->testClass->addAttribute($attrStr);
         $this->assertCount(1, $this->testClass);
     }
 
@@ -39,6 +53,18 @@ class NodeAttributesTest extends TestCase
         $attrs = [
             $a = new NodeAttribute(),
             $b = new NodeAttribute(),
+            $c = new NodeAttribute(),
+        ];
+
+        $this->testClass = new NodeAttributes($attrs);
+        $this->assertCount(3, $this->testClass);
+    }
+
+    public function testCanAddAttributesAsArrayOfDifferentTypes()
+    {
+        $attrs = [
+            $a = new NodeAttribute(),
+            'b = "value"',
             $c = new NodeAttribute(),
         ];
 
@@ -61,7 +87,6 @@ class NodeAttributesTest extends TestCase
         $this->testClass->addAttribute($testAttr);
 
         $this->assertTrue($this->testClass->hasAttribute($name));
-
     }
 
     public function testCanGetSpecificAttribute()
@@ -172,9 +197,9 @@ class NodeAttributesTest extends TestCase
             ' property=\'og:title\' content="Women\'s Shorts & Skorts in Denim, Khaki, & Jersey | Ralph Lauren" ',
             '<img onerror="this.remove()" id="altImgPlp" src=\'https://www.rlmedia.io/is/image/PoloGSI/s7-1333158_lifestyle?$rl_392_pdp$\' ',
             '<input type=\'hidden\' class=\'mailchimp_extra_field\' id="utm_location" value=\'Header_login\'
-             name=\'location\'',
-             "img class=\"minithumbimg\" width='110' height='120' ",
-            //  ' href="https://www.dollskill.com/shop-brands/" title=',
+                name=\'location\'',
+            "img class=\"minithumbimg\" width='110' height='120' ",
+            ' href="https://www.dollskill.com/shop-brands/" title=',
         ];
 
         foreach ($attrsStr as $attrStr) {
@@ -182,7 +207,6 @@ class NodeAttributesTest extends TestCase
             $this->testClass->parse($attrStr);
             $this->assertEquals($attrStr, $this->testClass->getHtml());
         }
-
     }
 
     public function testCanRestoreEmptyAttributesValue()
@@ -213,6 +237,7 @@ class NodeAttributesTest extends TestCase
             'id =',
             'id= ',
             'id = ',
+            'id'
         ];
 
         foreach ($attrs as $attr) {
@@ -220,19 +245,30 @@ class NodeAttributesTest extends TestCase
             $this->testClass->parse($attr);
             $this->assertEquals($attr, $this->testClass->getHtml());
         }
-
     }
 
-    // whitespace before doctype
-    // <meta charset=UTF-8>
-    // <meta property='og:title' content="Women's Shorts & Skorts in Denim, Khaki, & Jersey | Ralph Lauren" />
+    public function testCanInjectNodeAttributeDependencyClass()
+    {
+        $newNodeAttributeClass = $this->getMockClass('Yugeon\\HTML5Parser\\NodeAttributeInterface');
+        $this->testClass->injectNodeAttributeClass($newNodeAttributeClass);
+        $this->assertEquals($newNodeAttributeClass, $this->testClass->getNodeAttributeClass());
+    }
 
-    // <img onerror="this.remove()" id="altImgPlp" src='https://www.rlmedia.io/is/image/PoloGSI/s7-1333158_lifestyle?$rl_392_pdp$' />
-    //
-    //
-    // <input type='hidden' class='mailchimp_extra_field' id="utm_location" value='Header_login'
-// name='location'/>
-    //
-    // <img class="minithumbimg" width='110' height='120' />
-    // <li><a href="https://www.dollskill.com/shop-brands/" title=>Brands A-Z</a></li>
+    public function testNotAllowInjectClassThatNotImplementRelevantInterface()
+    {
+        $newNodeAttributeClass = $this->getMockClass(stdClass::class);
+        $oldNodeAttributeClass = $this->testClass->getNodeAttributeClass();
+
+        $this->testClass->injectNodeAttributeClass($newNodeAttributeClass);
+        $this->assertEquals($oldNodeAttributeClass, $this->testClass->getNodeAttributeClass());
+    }
+
+    public function testInjectedClassMustBeCalled()
+    {
+        $html = 'id="value"';
+        $newNodeAttributeClass = $this->getMockClass('Yugeon\\HTML5Parser\\NodeAttributeInterface');
+        $this->testClass->injectNodeAttributeClass($newNodeAttributeClass);
+        $this->testClass->parse($html);
+        $this->assertInstanceOf($newNodeAttributeClass, $this->testClass->getAttributes()[0]);
+    }
 }

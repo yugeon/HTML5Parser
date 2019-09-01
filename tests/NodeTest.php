@@ -5,28 +5,37 @@ namespace Yugeon\HTML5Parser\Tests;
 use PHPUnit\Framework\TestCase;
 use Yugeon\HTML5Parser\Node;
 
-class NodeTest extends TestCase {
+class NodeTest extends TestCase
+{
 
     /** @var Node */
     private $testClass;
 
-    function setUp() {
+    function setUp()
+    {
         $this->testClass = new Node();
     }
 
-    public function testClassCanBeInstantiated() {
+    public function testClassCanBeInstantiated()
+    {
         $this->assertTrue(is_object($this->testClass));
     }
 
-    public function testObjectIsOfCorrectType() {
+    public function testObjectIsOfCorrectType()
+    {
         $this->assertTrue(get_class($this->testClass) == 'Yugeon\HTML5Parser\Node');
+    }
+
+    public function testMustImplementNodeAttributesInterface()
+    {
+        $this->assertInstanceOf('Yugeon\Html5Parser\NodeInterface', $this->testClass);
     }
 
     public function testCanPassStringToConstructor()
     {
         $htmlNode = '<div>hello';
         $this->testClass = new Node($htmlNode);
-        $this->assertEquals($htmlNode, (String) $this->testClass);
+        $this->assertEquals($htmlNode, (string) $this->testClass);
     }
 
     public function testCanGetTagNameOfInitializedNode()
@@ -174,6 +183,18 @@ class NodeTest extends TestCase {
         $this->assertEquals($html, $this->testClass->getHtml());
     }
 
+    public function testCanGetInnerHtml()
+    {
+        $childNodeHtml = '<h1>hello';
+        $childNodeEndHtml = '</h1>';
+
+        $childNode = new Node($childNodeHtml);
+        $childNode->addEndNode(new Node($childNodeEndHtml));
+        $this->testClass->addNode($childNode);
+
+        $this->assertEquals($childNodeHtml . $childNodeEndHtml, $this->testClass->getInnerHtml());
+    }
+
     public function testCanSetGetNestingLevel()
     {
         $level = 2;
@@ -264,7 +285,6 @@ class NodeTest extends TestCase {
         $this->assertEquals('div', $this->testClass->getTagName());
         $this->assertEmpty($this->testClass->getChilds());
         $this->assertEquals($html, $this->testClass->getHtml());
-
     }
 
     public function testCanParseAttributes()

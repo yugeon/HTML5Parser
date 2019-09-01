@@ -2,13 +2,11 @@
 
 namespace Yugeon\HTML5Parser;
 
-class NodeAttributes implements \Countable, \IteratorAggregate
+// TODO: refactor to use ArrayObject
+class NodeAttributes implements NodeAttributesInterface, \Countable, \IteratorAggregate
 {
-    /** @var NodeAttribute[] */
+    /** @var NodeAttributeInterface[] */
     protected $attributes = [];
-
-    /** @var \Traversable */
-    protected $arrayIterator = null;
 
     /** @var string */
     protected $beginPreservedWhitespace = '';
@@ -16,22 +14,26 @@ class NodeAttributes implements \Countable, \IteratorAggregate
     /** @var string */
     protected $endPreservedWhitespace = '';
 
+    /** @var string */
+    protected $nodeAttributeClassName = __NAMESPACE__ . '\\NodeAttribute';
+
+    /**
+     * Initialize collection
+     *
+     * @param NodeAttributeInterface[]|string[] $attributes
+     */
     public function __construct($attributes = [])
     {
         $this->addAttributes($attributes);
     }
 
-    public function addAttributes($attributes = [])
-    {
-        foreach ($attributes as $attribute) {
-            if (!($attribute instanceof NodeAttribute) && is_string($attribute)) {
-                $this->parse($attribute);
-            }
-
-            $this->addAttribute($attribute);
-        }
-    }
-
+    /**
+     * Parses a string containing html attributes.
+     * @example 'id="abc" class="red" href="//site.domain/" disabled'
+     *
+     * @param string $attrStr
+     * @return void
+     */
     public function parse($attrStr)
     {
         if (empty($attrStr)) {
@@ -50,6 +52,12 @@ class NodeAttributes implements \Countable, \IteratorAggregate
         }
     }
 
+    /**
+     * Build attributes collection
+     *
+     * @param array $attrs
+     * @return void
+     */
     protected function buildAttributes($attrs)
     {
         foreach ($attrs as $attr) {
@@ -83,30 +91,47 @@ class NodeAttributes implements \Countable, \IteratorAggregate
             $signStr = !empty($attr['sign']) ? $attr['sign'] : null;
             $whitespaceBefore = !empty($attr['ws']) ? $attr['ws'] : '';
 
-            $this->addAttribute(new NodeAttribute($name, $value, $whitespaceBefore, $signStr, $quotesSymbol));
+            $this->addAttribute(new $this->nodeAttributeClassName($name, $value, $whitespaceBefore, $signStr, $quotesSymbol));
         }
     }
 
     /**
-     * Add attribute to collection
-     *
-     * @param NodeAttribute $attr
-     * @return void
+     * {@inheritDoc}
      */
-    public function addAttribute($attr)
+    public function addAttribute($attribute)
     {
-        if ($attr instanceof NodeAttribute) {
-            $this->attributes[] = $attr;
+        if (!($attribute instanceof NodeAttributeInterface) && is_string($attribute)) {
+            $this->parse($attribute);
+        } else if ($attribute instanceof NodeAttributeInterface) {
+            $this->attributes[] = $attribute;
+        } else {
+            return false;
         }
 
         return $this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public function addAttributes($attributes = [])
+    {
+        foreach ($attributes as $attribute) {
+            $this->addAttribute($attribute);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function hasAttributes()
     {
         return $this->count() > 0;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function hasAttribute($name)
     {
         if ($this->getAttribute($name)) {
@@ -116,6 +141,17 @@ class NodeAttributes implements \Countable, \IteratorAggregate
         return false;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public function getAttributes()
+    {
+        return $this->attributes;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function getAttribute($name)
     {
         foreach ($this->attributes as $attribute) {
@@ -127,6 +163,9 @@ class NodeAttributes implements \Countable, \IteratorAggregate
         return false;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function removeAttribute($name)
     {
         foreach ($this->attributes as $key => $attribute) {
@@ -140,6 +179,9 @@ class NodeAttributes implements \Countable, \IteratorAggregate
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function clearAttributes()
     {
         $this->attributes = [];
@@ -147,6 +189,9 @@ class NodeAttributes implements \Countable, \IteratorAggregate
         $this->endPreservedWhitespace = '';
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function getHtml()
     {
         $html = $this->beginPreservedWhitespace;
@@ -157,17 +202,42 @@ class NodeAttributes implements \Countable, \IteratorAggregate
         return $html . $this->endPreservedWhitespace;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function count()
     {
         return count($this->attributes);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function getIterator()
     {
-        if (!$this->arrayIterator) {
-            $this->arrayIterator = new \ArrayIterator($this->attributes);
-        }
+        return new \ArrayIterator($this->attributes);
+    }
 
-        return $this->arrayIterator;
+    /**
+     * Inject name of class, that implements NodeAttributeInterface
+     *
+     * @param string $nodeAttributeClassName Must implement NodeAttributeInterface
+     * @return void
+     */
+    public function injectNodeAttributeClass($nodeAttributeClassName)
+    {
+        if (in_array(NodeAttributeInterface::class, class_implements($nodeAttributeClassName))) {
+            $this->nodeAttributeClassName = $nodeAttributeClassName;
+        }
+    }
+
+    /**
+     * Getting class name that implement NodeAttributeInterface
+     *
+     * @return string
+     */
+    public function getNodeAttributeClass()
+    {
+        return $this->nodeAttributeClassName;
     }
 }

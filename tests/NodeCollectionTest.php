@@ -6,26 +6,36 @@ use PHPUnit\Framework\TestCase;
 use Yugeon\HTML5Parser\NodeCollection;
 use Yugeon\HTML5Parser\Node;
 
-class NodeCollectionTest extends TestCase {
+class NodeCollectionTest extends TestCase
+{
 
     private $testClass;
 
-    function setUp() {
+    function setUp()
+    {
         $this->testClass = new NodeCollection();
     }
 
-    public function testClassCanBeInstantiated() {
+    public function testClassCanBeInstantiated()
+    {
         $this->assertTrue(is_object($this->testClass));
     }
 
-    public function testObjectIsOfCorrectType() {
+    public function testObjectIsOfCorrectType()
+    {
         $this->assertTrue(get_class($this->testClass) == 'Yugeon\HTML5Parser\NodeCollection');
+    }
+
+    public function testMustImplementNodeCollectionInterface()
+    {
+        $this->assertInstanceOf('Yugeon\Html5Parser\NodeCollectionInterface', $this->testClass);
     }
 
     public function testCanAddNodeToCollection()
     {
         $node = new Node();
-        $this->assertTrue($this->testClass->addNode($node));
+        $this->testClass->addNode($node);
+        $this->assertEquals($node, $this->testClass->item(0));
         $this->assertCount(1, $this->testClass);
     }
 
@@ -134,4 +144,15 @@ class NodeCollectionTest extends TestCase {
         $this->assertEquals($nodes, $this->testClass->getItems());
     }
 
+    public function testCanRemoveNode()
+    {
+        $nodes = [
+            $a = new Node('<div>'),
+            $b = new Node('<span>'),
+            $c = new Node('<p>'),
+        ];
+        $this->testClass->addNodes($nodes);
+        $this->testClass->removeItem(1);
+        $this->assertEquals([$a, $c], $this->testClass->getItems());
+    }
 }

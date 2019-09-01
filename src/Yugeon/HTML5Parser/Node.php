@@ -2,7 +2,7 @@
 
 namespace Yugeon\HTML5Parser;
 
-class Node
+class Node implements NodeInterface
 {
     /** @var string */
     protected $stringValue = '';
@@ -10,13 +10,13 @@ class Node
     /** @var string */
     protected $tagName = '';
 
-    /** @var Node */
+    /** @var NodeInterface */
     protected $parentNode = null;
 
-    /** @var Node */
+    /** @var NodeInterface */
     protected $endNode = null;
 
-    /** @var NodeCollection */
+    /** @var NodeCollectionInterface */
     protected $childs = null;
 
     /** @var int */
@@ -33,8 +33,10 @@ class Node
 
     protected $attributesStr = '';
 
-    /** @var NodeAttributes */
+    /** @var NodeAttributesInterface */
     protected $attributes = null;
+
+    /** @var string */
     protected $textValue = '';
 
     // http://xahlee.info/js/html5_non-closing_tag.html
@@ -60,11 +62,24 @@ class Node
         '!doctype',
     ];
 
+    /**
+     * Instatinate Node.
+     *
+     * @param string $stringValue
+     * @param boolean $isComment
+     */
     public function __construct($stringValue = '', $isComment = false)
     {
         $this->parse($stringValue, $isComment);
     }
 
+    /**
+     * Parse string tag and fill this node properties.
+     *
+     * @param string $stringValue
+     * @param boolean $isComment
+     * @return void
+     */
     public function parse($stringValue, $isComment = false)
     {
         $this->stringValue = $stringValue;
@@ -75,6 +90,11 @@ class Node
         }
     }
 
+    /**
+     * Clear node for reuse.
+     *
+     * @return void
+     */
     protected function clear()
     {
         $this->tagName = '';
@@ -89,6 +109,12 @@ class Node
         $this->level = 0;
     }
 
+    /**
+     * Parse string tag.
+     *
+     * @param string $stringValue
+     * @return void
+     */
     protected function parseStringTag($stringValue)
     {
         $this->clear();
@@ -98,7 +124,7 @@ class Node
         }
 
         if (false !== preg_match(
-            '#<(?<end1>/)?(?<tag>[^!\s>/]+|!doctype)(?<attr>\s+(?:[^\'"/>]+|".*?"|\'.*?\')*)?(?<end2>\s*/)?>(?<html>.*)#is',
+            '#<(?<end1>/)?(?<tag>[^!\s>/]+|!doctype)(?<attr>\s+(?:[^\'"/>]+|".*?"|\'.*?\')*)?(?<end2>\s*/)?>(?<text>.*)#is',
             $stringValue,
             $matches
         )) {
@@ -129,12 +155,18 @@ class Node
                 }
             }
 
-            if (isset($matches['html'])) {
-                $this->textValue = $matches['html'];
+            if (isset($matches['text'])) {
+                $this->textValue = $matches['text'];
             }
         }
     }
 
+    /**
+     * Parse string comment tag
+     *
+     * @param string $stringValue
+     * @return void
+     */
     protected function parseCommentTag($stringValue)
     {
         $this->clear();
@@ -143,7 +175,7 @@ class Node
             return;
         }
 
-        if (false !== preg_match('#<(?<tag>!--)(?<comment>.*?)-->(?<html>.*)#is', $stringValue, $matches)) {
+        if (false !== preg_match('#<(?<tag>!--)(?<comment>.*?)-->(?<text>.*)#is', $stringValue, $matches)) {
             if (isset($matches['tag'])) {
                 $this->tagName = $matches['tag'];
             } else {
@@ -156,27 +188,39 @@ class Node
             $this->isEndTag = false;
             $this->attributesStr = isset($matches['comment']) ? $matches['comment'] : '';
 
-            if (isset($matches['html'])) {
-                $this->textValue = $matches['html'];
+            if (isset($matches['text'])) {
+                $this->textValue = $matches['text'];
             }
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function isDoctype()
     {
         return 1 === preg_match('#!doctype#i', $this->tagName);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function isComment()
     {
         return $this->tagName === '!--' ? true : false;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function getTagName()
     {
         return $this->tagName;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function isSelfClosingTag()
     {
         if ($this->isSelfClosingTag) {
@@ -186,18 +230,22 @@ class Node
         return in_array(strtolower($this->tagName), $this->selfClosingTags);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function getHtml()
     {
         $html = $this->_getSelfHtml();
-        foreach ($this->getChilds() as $node) {
-            $html .= $node->getHtml();
-        }
+        $html .= $this->getInnerHtml();
 
         $html .= ($this->endNode ? $this->endNode->getHtml() : '');
 
         return $html;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected function _getSelfHtml()
     {
         return
@@ -210,6 +258,23 @@ class Node
             $this->textValue;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public function getInnerHtml()
+    {
+        $html = '';
+
+        foreach ($this->getChilds() as $node) {
+            $html .= $node->getHtml();
+        }
+
+        return $html;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function setParent($node)
     {
         if ($node instanceof Node) {
@@ -217,16 +282,16 @@ class Node
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function getParent()
     {
         return $this->parentNode;
     }
 
     /**
-     * Add child node
-     *
-     * @param  Node $node
-     * @return void
+     * {@inheritDoc}
      */
     public function addNode($node)
     {
@@ -236,10 +301,7 @@ class Node
     }
 
     /**
-     * Add child nodes
-     *
-     * @param Node[] $nodes
-     * @return void
+     * {@inheritDoc}
      */
     public function addNodes($nodes)
     {
@@ -251,10 +313,7 @@ class Node
     }
 
     /**
-     * Add end node
-     *
-     * @param Node $node
-     * @return void
+     * {@inheritDoc}
      */
     public function addEndNode($node)
     {
@@ -264,8 +323,7 @@ class Node
     }
 
     /**
-     *
-     * @return Node|null
+     * {@inheritDoc}
      */
     public function getEndNode()
     {
@@ -273,8 +331,7 @@ class Node
     }
 
     /**
-     *
-     * @return NodeCollection
+     * {@inheritDoc}
      */
     public function getChilds()
     {
@@ -283,43 +340,86 @@ class Node
 
     // TODO: methods work around child nodes
 
+    /**
+     * {@inheritDoc}
+     */
     public function setLevel($level)
     {
         $this->level = $level;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function getLevel()
     {
         return $this->level;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function getAttributes()
     {
         return $this->attributes;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function getAttribute($name)
     {
         return $this->attributes->getAttribute($name);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function hasAttributes()
     {
         return $this->attributes->hasAttributes();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function hasAttribute($name)
     {
         return $this->attributes->hasAttribute($name);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function removeAttribute($name)
     {
         $this->attributes->removeAttribute($name);
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public function clearAttributes()
+    {
+        $this->attributes->clearAttributes();
+    }
+
     public function __toString()
     {
         return $this->getHtml();
+    }
+
+    public function prepareForRemove()
+    {
+        $this->parentNode = null;
+
+        if (!is_null($this->endNode)) {
+            $this->endNode->prepareForRemove();
+        }
+        $this->endNode = null;
+
+        foreach ($this->childs as $childNode) {
+            $childNode->prepareForRemove();
+        }
     }
 }

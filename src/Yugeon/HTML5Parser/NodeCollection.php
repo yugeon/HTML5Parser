@@ -4,22 +4,29 @@ namespace Yugeon\HTML5Parser;
 
 use Yugeon\HTML5Parser\Node;
 
-class NodeCollection implements \Countable, \IteratorAggregate
+// TODO: refactor to use ArrayObject
+class NodeCollection implements NodeCollectionInterface, \Countable, \IteratorAggregate
 {
     /** @var Node[] */
     protected $nodes = [];
 
-    /** @var \Traversable */
-    protected $arrayIterator = null;
-
     /** @var int */
     protected $level = 0;
 
+    /**
+     * Instantinate a collection of nodes.
+     *
+     * @param NodeInterface[]|string[] $nodes
+     * @return void
+     */
     public function __construct($nodes = [])
     {
         $this->addNodes($nodes);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function addNodes($nodes = [])
     {
         foreach ($nodes as $node) {
@@ -33,46 +40,74 @@ class NodeCollection implements \Countable, \IteratorAggregate
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public function addNode(Node $node)
+    {
+        $this->nodes[] = $node;
+        $node->setLevel($this->level);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function count()
     {
         return count($this->nodes);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function item($index)
     {
         return isset($this->nodes[$index]) ? $this->nodes[$index] : null;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function getItems()
     {
         return $this->nodes;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function setLevel($level)
     {
         $this->level = $level;
         return $this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function getLevel()
     {
         return $this->level;
     }
 
-    public function addNode(Node $node)
+    /**
+     * {@inheritDoc}
+     */
+    public function removeItem($index)
     {
-        $this->nodes[] = $node;
-        $node->setLevel($this->level);
-
-        return true;
-    }
-
-    public function getIterator()
-    {
-        if (!$this->arrayIterator) {
-            $this->arrayIterator = new \ArrayIterator($this->nodes);
+        // TODO: check and remove links to this node.
+        $deleted = array_splice($this->nodes, $index, 1);
+        foreach ($deleted as $node) {
+            $node->prepareForRemove();
         }
 
-        return $this->arrayIterator;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getIterator()
+    {
+        return new \ArrayIterator($this->nodes);
     }
 }

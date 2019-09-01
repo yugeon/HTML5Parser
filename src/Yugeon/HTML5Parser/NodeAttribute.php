@@ -2,7 +2,7 @@
 
 namespace Yugeon\HTML5Parser;
 
-class NodeAttribute
+class NodeAttribute implements NodeAttributeInterface
 {
     /** @var string */
     protected $stringValue = '';
@@ -23,10 +23,13 @@ class NodeAttribute
     protected $quotesSymbol = '';
 
     /**
+     * Create NodeAttributeInterface instance
      *
-     * @param string $name
-     * @param string|null $value
-     * @param string $whitespaceBefore
+     * @param string $name Name of attribute
+     * @param string|null $value Value of attribute, if null - attribute is empty
+     * @param string $whitespaceBefore Whitespaces before attribute name
+     * @param string|null $signStr Equal sign and whitespaces around it
+     * @param string $quotesSymbol Quotes symbol around attribute value. Default - no quotes.
      */
     public function __construct($name = '', $value = null, $whitespaceBefore = '', $signStr = null, $quotesSymbol = '')
     {
@@ -48,9 +51,7 @@ class NodeAttribute
     }
 
     /**
-     *
-     * @param string $name
-     * @return void
+     * {@inheritDoc}
      */
     public function setName($name)
     {
@@ -58,8 +59,7 @@ class NodeAttribute
     }
 
     /**
-     *
-     * @return string
+     * {@inheritDoc}
      */
     public function getName()
     {
@@ -67,9 +67,7 @@ class NodeAttribute
     }
 
     /**
-     *
-     * @param string|null $value
-     * @return void
+     * {@inheritDoc}
      */
     public function setValue($value)
     {
@@ -77,8 +75,7 @@ class NodeAttribute
     }
 
     /**
-     *
-     * @return string|null
+     * {@inheritDoc}
      */
     public function getValue()
     {
@@ -86,9 +83,7 @@ class NodeAttribute
     }
 
     /**
-     *
-     * @param string|null $signStr
-     * @return void
+     * {@inheritDoc}
      */
     public function setSignStr($signStr)
     {
@@ -96,8 +91,7 @@ class NodeAttribute
     }
 
     /**
-     *
-     * @return string|null
+     * {@inheritDoc}
      */
     public function getSignStr()
     {
@@ -105,9 +99,7 @@ class NodeAttribute
     }
 
     /**
-     *
-     * @param string $quotesSymbol
-     * @return void
+     * {@inheritDoc}
      */
     public function setQuotesSymbol($quotesSymbol)
     {
@@ -125,8 +117,7 @@ class NodeAttribute
     }
 
     /**
-     *
-     * @return string
+     * {@inheritDoc}
      */
     public function getQuotesSymbol()
     {
@@ -134,8 +125,7 @@ class NodeAttribute
     }
 
     /**
-     *
-     * @return string
+     * {@inheritDoc}
      */
     public function getHtml()
     {
