@@ -438,6 +438,7 @@ class Node implements NodeInterface
     {
         $this->textData = $textData;
         $this->isTextNode = true;
+        $this->tagName = '#text';
     }
 
     public function getTextData()

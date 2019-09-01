@@ -332,6 +332,15 @@ class NodeTest extends TestCase
         $this->assertTrue($this->testClass->isTextNode());
     }
 
+    public function testTextNodeTagNameMustBeText()
+    {
+        $textData = ' text node ';
+        $this->testClass = new Node();
+        $this->testClass->addTextData($textData);
+
+        $this->assertEquals('#text', $this->testClass->getTagName());
+    }
+
     public function testTextNodeMustCorrectlyReturnHtml()
     {
         $textData = ' text node ';
