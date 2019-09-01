@@ -36,8 +36,11 @@ class Node implements NodeInterface
     /** @var NodeAttributesInterface */
     protected $attributes = null;
 
+    /** @var bool */
+    public $isTextNode = false;
+
     /** @var string */
-    protected $textValue = '';
+    protected $textData = '';
 
     // http://xahlee.info/js/html5_non-closing_tag.html
     protected $selfClosingTags = [
@@ -102,11 +105,12 @@ class Node implements NodeInterface
         $this->isEndTag = false;
         $this->isSelfClosingTag = false;
         $this->attributesStr = '';
-        $this->textValue = '';
         $this->parentNode = null;
         $this->childs = new NodeCollection();
         $this->attributes = new NodeAttributes();
         $this->level = 0;
+        $this->isTextNode = false;
+        $this->textData = '';
     }
 
     /**
@@ -124,7 +128,7 @@ class Node implements NodeInterface
         }
 
         if (false !== preg_match(
-            '#<(?<end1>/)?(?<tag>[^!\s>/]+|!doctype)(?<attr>\s+(?:[^\'"/>]+|".*?"|\'.*?\')*)?(?<end2>\s*/)?>(?<text>.*)#is',
+            '#<(?<end1>/)?(?<tag>[^!\s>/]+|!doctype)(?<attr>\s+(?:[^\'"/>]+|".*?"|\'.*?\')*)?(?<end2>\s*/)?>#is',
             $stringValue,
             $matches
         )) {
@@ -154,10 +158,6 @@ class Node implements NodeInterface
                     $this->attributes->parse($this->attributesStr);
                 }
             }
-
-            if (isset($matches['text'])) {
-                $this->textValue = $matches['text'];
-            }
         }
     }
 
@@ -175,7 +175,7 @@ class Node implements NodeInterface
             return;
         }
 
-        if (false !== preg_match('#<(?<tag>!--)(?<comment>.*?)-->(?<text>.*)#is', $stringValue, $matches)) {
+        if (false !== preg_match('#<(?<tag>!--)(?<comment>.*?)-->#is', $stringValue, $matches)) {
             if (isset($matches['tag'])) {
                 $this->tagName = $matches['tag'];
             } else {
@@ -187,10 +187,6 @@ class Node implements NodeInterface
             $this->isStartTag = true;
             $this->isEndTag = false;
             $this->attributesStr = isset($matches['comment']) ? $matches['comment'] : '';
-
-            if (isset($matches['text'])) {
-                $this->textValue = $matches['text'];
-            }
         }
     }
 
@@ -248,14 +244,23 @@ class Node implements NodeInterface
      */
     protected function _getSelfHtml()
     {
-        return
-            "<" . ($this->isEndTag ? '/' : '') .
-            $this->tagName . '' .
-            $this->attributes->getHtml() .
-            ($this->isSelfClosingTag ? '/' : '') .
-            ($this->isComment() ? $this->attributesStr . '--' : '') .
-            '>' .
-            $this->textValue;
+        $selfHtml = '';
+
+        if ($this->isTextNode()) {
+            $selfHtml = $this->getTextData();
+        } else {
+            $selfHtml =
+                "<" . ($this->isEndTag ? '/' : '') .
+                $this->tagName . '' .
+                $this->attributes->getHtml() .
+                ($this->isSelfClosingTag ? '/' : '') .
+                ($this->isComment() ? $this->attributesStr . '--' : '') .
+                '>';
+        }
+
+        return $selfHtml;
+
+            // . $this->textValue;
     }
 
     /**
@@ -279,6 +284,7 @@ class Node implements NodeInterface
     {
         if ($node instanceof Node) {
             $this->parentNode = $node;
+            $this->level = ($node->getLevel() + 1);
         }
     }
 
@@ -421,5 +427,25 @@ class Node implements NodeInterface
         foreach ($this->childs as $childNode) {
             $childNode->prepareForRemove();
         }
+    }
+
+    public function isTextNode()
+    {
+        return $this->isTextNode;
+    }
+
+    public function addTextData($textData)
+    {
+        $this->textData = $textData;
+        $this->isTextNode = true;
+    }
+
+    public function getTextData()
+    {
+        if ($this->isTextNode()) {
+            return $this->textData;
+        }
+
+        return '';
     }
 }

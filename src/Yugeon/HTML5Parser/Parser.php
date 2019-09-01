@@ -35,7 +35,7 @@ class Parser
         $this->preservDocumentWhitespaces($html);
         $html = $this->preserveScripts($html);
 
-        if (false !== preg_match_all('#(?:(?<comment><!--.*?-->)|(?<node><(?:[^\'">]+|".*?"|\'.*?\')+>))(?<html>[^<]*)#is', $html, $matches, PREG_SET_ORDER)) {
+        if (false !== preg_match_all('#(?:(?<comment><!--.*?-->)|(?<node><(?:[^\'">]+|".*?"|\'.*?\')+>))(?<text>[^<]*)#is', $html, $matches, PREG_SET_ORDER)) {
             if (isset($matches)) {
                 $this->buildNodesTree($matches);
             }
@@ -44,25 +44,25 @@ class Parser
         return $this;
     }
 
-    public function buildNodesTree($nodes = [])
+    public function buildNodesTree($matches = [])
     {
         $root = new Node('<root>');
         $root->setLevel(-1);
         $parentNode = $root;
 
-        foreach ($nodes as $node) {
+        foreach ($matches as $match) {
             $isComment = false;
-            if (!empty($node['node'])) {
-                $nodeStr = $node['node'];
-            } else if (isset($node['comment'])) {
-                $nodeStr = $node['comment'];
+            if (!empty($match['node'])) {
+                $nodeStr = $match['node'];
+            } else if (isset($match['comment'])) {
+                $nodeStr = $match['comment'];
                 $isComment = true;
             } else {
                 // TODO: warning unusual situation
                 continue;
             }
 
-            $nodeStr .= isset($node['html']) ? $node['html'] : '';
+           // $nodeStr .= isset($node['html']) ? $node['html'] : '';
             $node = new Node($nodeStr, $isComment);
 
             if ($node instanceof Node) {
@@ -82,6 +82,12 @@ class Parser
                 } else {
                     $parentNode = $node;
                 }
+            }
+
+            if (isset($match['text']) && strlen($match['text']) > 0) {
+                $textNode = new Node();
+                $textNode->addTextData($match['text']);
+                $parentNode->addNode($textNode);
             }
         }
 

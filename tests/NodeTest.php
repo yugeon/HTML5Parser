@@ -33,21 +33,21 @@ class NodeTest extends TestCase
 
     public function testCanPassStringToConstructor()
     {
-        $htmlNode = '<div>hello';
+        $htmlNode = '<div>';
         $this->testClass = new Node($htmlNode);
         $this->assertEquals($htmlNode, (string) $this->testClass);
     }
 
     public function testCanGetTagNameOfInitializedNode()
     {
-        $htmlNode = '<div>hello';
+        $htmlNode = '<div>';
         $this->testClass = new Node($htmlNode);
         $this->assertEquals('div', $this->testClass->getTagName());
     }
 
     public function testCanInitFromSeparateMethod()
     {
-        $htmlNode = '<div>hello';
+        $htmlNode = '<div>';
         $this->testClass->parse($htmlNode);
         $this->assertEquals('div', $this->testClass->getTagName());
         $this->assertTrue($this->testClass->isStartTag);
@@ -58,12 +58,12 @@ class NodeTest extends TestCase
         $this->assertFalse($this->testClass->isStartTag);
         $this->assertFalse($this->testClass->isEndTag);
 
-        $htmlNode = '<div>hello';
+        $htmlNode = '<div>';
         $this->testClass->parse($htmlNode);
         $this->assertTrue($this->testClass->isStartTag);
         $this->assertFalse($this->testClass->isEndTag);
 
-        $htmlNode = '</div>hello';
+        $htmlNode = '</div>';
         $this->testClass->parse($htmlNode);
         $this->assertFalse($this->testClass->isStartTag);
         $this->assertTrue($this->testClass->isEndTag);
@@ -71,7 +71,7 @@ class NodeTest extends TestCase
 
     public function testCanParseEndTag()
     {
-        $htmlNode = '</div>hello';
+        $htmlNode = '</div>';
         $this->testClass->parse($htmlNode);
         $this->assertEquals('div', $this->testClass->getTagName());
         $this->assertTrue($this->testClass->isEndTag);
@@ -97,7 +97,7 @@ class NodeTest extends TestCase
 
     public function testCanParseTagsWithWhitespaces()
     {
-        $htmlNode = '<div  id="abc">hello';
+        $htmlNode = '<div  id="abc">';
         $this->testClass->parse($htmlNode);
         $this->assertEquals('div', $this->testClass->getTagName());
         $this->assertTrue($this->testClass->isStartTag);
@@ -132,25 +132,25 @@ class NodeTest extends TestCase
 
     public function testCanRestoreOriginalStartTag()
     {
-        $html = '<div>Hello world';
+        $html = '<div>';
         $this->testClass->parse($html);
         $this->assertEquals($html, $this->testClass->getHtml());
     }
 
     public function testCanRestoreOriginalEndTag()
     {
-        $html = '</div>Hello world';
+        $html = '</div>';
         $this->testClass->parse($html);
         $this->assertEquals($html, $this->testClass->getHtml());
     }
 
     public function testCanRestoreOriginalSelfClosingTag()
     {
-        $html = '<br/> Hello world';
+        $html = '<br/>';
         $this->testClass->parse($html);
         $this->assertEquals($html, $this->testClass->getHtml());
 
-        $html = '<BR> Hello world';
+        $html = '<BR>';
         $this->testClass->parse($html);
         $this->assertEquals($html, $this->testClass->getHtml());
     }
@@ -164,35 +164,34 @@ class NodeTest extends TestCase
 
     public function testCanRestoreOriginalComment()
     {
-        $html = '<!-- any beny -->allo';
+        $html = '<!-- any beny -->';
         $this->testClass->parse($html, true);
         $this->assertEquals($html, $this->testClass->getHtml());
     }
 
     public function testCanRestoreOriginalTagWithWhitespaces()
     {
-        $html = '<div  id="abc" >allo';
-        $this->testClass->parse($html);
-        $this->assertEquals($html, $this->testClass->getHtml());
-    }
-
-    public function testCanRestoreOriginalHtmlWithWhitespacesInHtml()
-    {
-        $html = "<div>Hello \t\n";
+        $html = '<div  id="abc" >';
         $this->testClass->parse($html);
         $this->assertEquals($html, $this->testClass->getHtml());
     }
 
     public function testCanGetInnerHtml()
     {
-        $childNodeHtml = '<h1>hello';
+        $childNodeHtml = '<h1>';
+        $childText = 'hello';
         $childNodeEndHtml = '</h1>';
 
         $childNode = new Node($childNodeHtml);
+
+        $childTextNode = new Node();
+        $childTextNode->addTextData($childText);
+        $childNode->addNode($childTextNode);
+
         $childNode->addEndNode(new Node($childNodeEndHtml));
         $this->testClass->addNode($childNode);
 
-        $this->assertEquals($childNodeHtml . $childNodeEndHtml, $this->testClass->getInnerHtml());
+        $this->assertEquals($childNodeHtml . $childText . $childNodeEndHtml, $this->testClass->getInnerHtml());
     }
 
     public function testCanSetGetNestingLevel()
@@ -211,8 +210,8 @@ class NodeTest extends TestCase
 
     public function testCanCloseNodeByOtherNode()
     {
-        $startNode = new Node('<span>Hello');
-        $endNode = new Node('</span>world');
+        $startNode = new Node('<span>');
+        $endNode = new Node('</span>');
         $startNode->addEndNode($endNode);
 
         $this->assertEquals($endNode, $startNode->getEndNode());
@@ -220,13 +219,17 @@ class NodeTest extends TestCase
 
     public function testCanRestoreHtmlConsideringEndNode()
     {
-        $startTag = '<span>Hello';
-        $endTag = '</span>world';
+        $startTag = '<span>';
+        $childText = 'hello';
+        $endTag = '</span>';
         $startNode = new Node($startTag);
+        $childTextNode = new Node();
+        $childTextNode->addTextData($childText);
+        $startNode->addNode($childTextNode);
         $endNode = new Node($endTag);
         $startNode->addEndNode($endNode);
 
-        $this->assertEquals($startTag . $endTag, $startNode->getHtml());
+        $this->assertEquals($startTag . $childText . $endTag, $startNode->getHtml());
     }
 
     public function testCanAddGetChildNode()
@@ -239,8 +242,8 @@ class NodeTest extends TestCase
     public function testCanAddGetChildNodes()
     {
         $childNodes = [
-            $a = new Node('<br>World'),
-            $b = new Node('</div>')
+            $a = new Node('<br>'),
+            $b = new Node('<div>')
         ];
         $this->testClass->addNodes($childNodes);
         $this->assertEquals($childNodes, $this->testClass->getChilds()->getItems());
@@ -251,8 +254,8 @@ class NodeTest extends TestCase
         $level = 3;
         $this->testClass->setLevel($level);
         $childNodes = [
-            $a = new Node('<br>World'),
-            $b = new Node('</div>')
+            $a = new Node('<br>'),
+            $b = new Node('<div>')
         ];
         $this->testClass->addNodes($childNodes);
         $this->assertEquals($level + 1, $this->testClass->getChilds()->item(1)->getLevel());
@@ -260,13 +263,13 @@ class NodeTest extends TestCase
 
     public function testCanRestoreHtmlConsideringChildNodes()
     {
-        $this->testClass->parse('<div>Hello');
+        $this->testClass->parse('<div>');
         $childNodes = [
-            $a = new Node('<br>World'),
-            $b = new Node('</div>')
+            $a = new Node('<br>'),
+            $b = new Node('<div>')
         ];
         $this->testClass->addNodes($childNodes);
-        $this->assertEquals('<div>Hello<br>World</div>', $this->testClass->getHtml());
+        $this->assertEquals('<div><br><div>', $this->testClass->getHtml());
     }
 
     public function testMustSetCorrectParentNodeAfterAddNode()
@@ -280,43 +283,61 @@ class NodeTest extends TestCase
 
     public function testCanParseTagsWithAnyAttributes()
     {
-        $html = '<div class="red>green">Hello';
+        $html = '<div class="red>green">';
         $this->testClass->parse($html);
+
         $this->assertEquals('div', $this->testClass->getTagName());
-        $this->assertEmpty($this->testClass->getChilds());
+        $this->assertCount(0, $this->testClass->getChilds());
         $this->assertEquals($html, $this->testClass->getHtml());
     }
 
     public function testCanParseAttributes()
     {
-        $this->testClass->parse('<div id="2" class="red" custom-attr=\'hello world\'>!--Hello world !doctype');
+        $this->testClass->parse('<div id="2" class="red" custom-attr=\'hello world\'>');
         $this->assertCount(3, $this->testClass->getAttributes());
     }
 
     public function testCanCheckIfNodeHasAttributes()
     {
-        $this->testClass->parse('<div id="2" class="red" custom-attr=\'hello world\'>!--Hello world !doctype');
+        $this->testClass->parse('<div id="2" class="red" custom-attr=\'hello world\'>');
         $this->assertTrue($this->testClass->hasAttributes());
     }
 
     public function testCanCheckIfNodeHasSpecificAttribute()
     {
-        $this->testClass->parse('<div id="2" class="red" custom-attr=\'hello world\'>!--Hello world !doctype');
+        $this->testClass->parse('<div id="2" class="red" custom-attr=\'hello world\'>');
         $this->assertTrue($this->testClass->hasAttribute('class'));
         $this->assertFalse($this->testClass->hasAttribute('not-attr'));
     }
 
     public function testCanGetNodeSpecificAttribute()
     {
-        $this->testClass->parse('<div id="2" class="red" custom-attr=\'hello world\'>!--Hello world !doctype');
+        $this->testClass->parse('<div id="2" class="red" custom-attr=\'hello world\'>');
         $this->assertEquals('2', $this->testClass->getAttribute('id')->getValue());
     }
 
     public function testCanRemoveNodeSpecificAttribute()
     {
-        $this->testClass->parse('<div id="2" class="red" custom-attr=\'hello world\'>!--Hello world !doctype');
+        $this->testClass->parse('<div id="2" class="red" custom-attr=\'hello world\'>');
         $this->testClass->removeAttribute('id');
         $this->assertFalse($this->testClass->hasAttribute('id'));
     }
 
+    public function testCanCreateTextNode()
+    {
+        $textData = ' text node ';
+        $this->testClass = new Node();
+        $this->testClass->addTextData($textData);
+        $this->assertEquals($textData, $this->testClass->getTextData());
+        $this->assertTrue($this->testClass->isTextNode());
+    }
+
+    public function testTextNodeMustCorrectlyReturnHtml()
+    {
+        $textData = ' text node ';
+        $this->testClass = new Node();
+        $this->testClass->addTextData($textData);
+
+        $this->assertEquals($textData, $this->testClass->getHtml());
+    }
 }
