@@ -20,21 +20,6 @@ class Parser
     protected $startTime = 0;
 
     /**
-     * Whitespace before the first tag.
-     *
-     * @var string
-     */
-    protected $preservedDocumentWhitespace = '';
-
-    /**
-     * A collection of references to objects with nodes.
-     * It is necessary to prevent the loss of user nodes in the depths of DOMDocument.
-     *
-     * @var NodeInterface[]
-     */
-    protected $_nodes = [];
-
-    /**
      * Parse input html.
      *
      * @param string $html Input html.
@@ -73,7 +58,6 @@ class Parser
         $this->removedScripts = [];
         $this->startTime = 0;
         $this->preservedDocumentWhitespace = '';
-        $this->_nodes = [];
     }
 
     /**
@@ -90,7 +74,9 @@ class Parser
         foreach ($matches as $match) {
             if (!empty($match['node'])) {
                 if (!empty($match['end1'])) {
-                    $parentNode->addEndTag($match['node']);
+                    if ($parentNode instanceof ElementNodeInterface) {
+                        $parentNode->addEndTag($match['node']);
+                    }
                     $parentNode = $parentNode->parentNode;
                     $node = null;
                 } else {
@@ -105,7 +91,6 @@ class Parser
 
             if (!is_null($node) && $node instanceof \DOMNode) {
 
-                // $this->_nodes[] = $node;
                 // $parentNode->appendChild($node);
 
                 if ($node->isSelfClosingTag() || $node->isComment()) {
@@ -118,8 +103,17 @@ class Parser
             }
 
             if (isset($match['text']) && strlen($match['text']) > 0) {
-                $textNode = new TextNode($match['text']);
-                $this->_nodes[] = $textNode;
+                $textContent = $match['text'];
+
+                if (($parentNode instanceof \DOMElement) && preg_match('#script|template#i', $parentNode->tagName)) {
+                    $hash = str_replace(self::REMOVED_SCRIPTS_TEMPLATE, '', $match['text']);
+                    if (isset($this->removedScripts[$hash])) {
+                        $textContent = $this->removedScripts[$hash];
+                        unset($this->removedScripts[$hash]);
+                    }
+                }
+
+                $textNode = new TextNode($textContent);
                 $parentNode->appendChild($textNode);
             }
         }
@@ -144,7 +138,7 @@ class Parser
             $matches
         )) {
             if (isset($matches['tag'])) {
-                if (preg_match('#!doctype#i', $matches['tag'])) {
+                if (0 === strcasecmp('!doctype', $matches['tag'])) {
                     $implementation = new \DOMImplementation();
                     $doctype = isset($matches['attr']) ? substr($matches['attr'], 1) : '';
                     $this->getDomDocument()->appendChild($implementation->createDocumentType($doctype));
@@ -158,7 +152,6 @@ class Parser
                 }
 
                 $parentNode->appendChild($node);
-                $this->_nodes[] = $node;
             } else {
                 return null;
             }
@@ -267,7 +260,6 @@ class Parser
             if (isset($matches['comment'])) {
                 $node = new CommentNode($matches['comment']);
                 $parentNode->appendChild($node);
-                $this->_nodes[] = $node;
             } else {
                 // TODO: not comment
                 //throw new \Exception("Seems [{$stringValue}] not comment");
@@ -283,18 +275,7 @@ class Parser
      */
     public function getHtml()
     {
-        $html = $this->preservedDocumentWhitespace;
-
-        /** @var \DOMNode $node */
-        foreach ($this->getDomDocument()->childNodes as $node) {
-            if (XML_DOCUMENT_TYPE_NODE === $node->nodeType) {
-                $html .= $this->getDomDocument()->saveXML($node);
-            } else {
-                $html .= $node->getHtml();
-            }
-        }
-
-        return $this->restoreScripts($html);
+        return $this->getDomDocument()->getHtml();
     }
 
     /**
@@ -307,9 +288,9 @@ class Parser
     {
         $firstTagPos = strpos($html, '<');
         if (false !== $firstTagPos && 0 !== $firstTagPos) {
-            $this->preservedDocumentWhitespace = substr($html, 0, $firstTagPos);
+            $this->getDomDocument()->setPreservedDocumentWhitespace(substr($html, 0, $firstTagPos));
         } else {
-            $this->preservedDocumentWhitespace = '';
+            $this->getDomDocument()->setPreservedDocumentWhitespace('');
         }
     }
 
@@ -336,23 +317,6 @@ class Parser
         return $html;
     }
 
-    /**
-     * Restore the contents of scripts and templates.
-     *
-     * @param string $html
-     * @return string
-     */
-    protected function restoreScripts($html)
-    {
-        $search = [];
-        $hashes = array_keys($this->removedScripts);
-        foreach ($hashes as $hash) {
-            $search[] = static::REMOVED_SCRIPTS_TEMPLATE . $hash;
-        }
-
-        return str_replace($search, $this->removedScripts, $html);
-    }
-
     public function getWorkTime()
     {
         return microtime(true) - $this->startTime;
@@ -360,15 +324,15 @@ class Parser
 
     /**
      * Reference to the DomDocument object of the current parsing result.
-     * Note that it is better to use the getHtml() method of the current class to get the correct HTML.
-     *  @see Parser::getHtml()
+     * Note that it is better to use the getHtml() method instead saveHtml().
+     *  @see DomDocument::getHtml()
      *
-     * @return \DOMDocument
+     * @return DomDocument
      */
     public function getDomDocument()
     {
         if (is_null($this->domDocument)) {
-            $this->domDocument = new \DOMDocument('1.0', 'UTF-8');
+            $this->domDocument = new DomDocument('1.0', 'UTF-8');
         }
 
         return $this->domDocument;

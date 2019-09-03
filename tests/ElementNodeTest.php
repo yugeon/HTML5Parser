@@ -6,6 +6,7 @@ use PHPUnit\Framework\TestCase;
 use Yugeon\HTML5Parser\ElementNode;
 use Yugeon\HTML5Parser\NodeAttribute;
 use Yugeon\HTML5Parser\NodeAttributeInterface;
+use Yugeon\HTML5Parser\TextNode;
 
 class ElementNodeTest extends TestCase
 {
@@ -198,5 +199,20 @@ class ElementNodeTest extends TestCase
         $this->testClass->setAttributeNode($attr);
         $this->testClass->removeAttribute('id');
         $this->assertFalse($this->testClass->hasAttribute('id'));
+    }
+
+    public function testMustAutoCloseTagIfChildNodesExist()
+    {
+        $childEl = new TextNode('hello');
+        $this->testClass->appendChild($childEl);
+        $this->assertEquals('<div>hello</div>', $this->testClass->getHtml());
+    }
+
+    public function testMustPreserveRefToChildNodes()
+    {
+        $childEl = new TextNode('hello');
+        $this->testClass->appendChild($childEl);
+        $this->testClass->addEndTag('</div>');
+        $this->assertEquals('<div>hello</div>', $this->testClass->getHtml());
     }
 }

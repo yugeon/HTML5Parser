@@ -115,7 +115,13 @@ class ElementNode extends \DOMElement implements NodeInterface, ElementNodeInter
     public function getHtml()
     {
         $html = $this->_getSelfHtml();
-        $html .= $this->getInnerHtml();
+
+        $innerHtml = $this->getInnerHtml();
+        $html .= $innerHtml;
+
+        if (!empty($innerHtml) && empty($this->endTag)) {
+                $html .= "</{$this->tagName}>";
+        }
 
         $html .= ($this->endTag ? $this->endTag : '');
 
@@ -201,6 +207,12 @@ class ElementNode extends \DOMElement implements NodeInterface, ElementNodeInter
     {
         $attr = new NodeAttribute($name, $value, $whitespaceBefore, $signStr, $quotesSymbol);
         return $this->setAttributeNode($attr);
+    }
+
+    public function appendChild($node)
+    {
+        $this->_nodes[] = $node;
+        return parent::appendChild($node);
     }
 
     public function __toString()
