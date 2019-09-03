@@ -241,7 +241,9 @@ class ParserTest extends TestCase
     public function testCanParseSelfClosedCustomTags()
     {
         $html = '<custom-tag/> <yet-another-custom-tag />
+                <br>
                 <and-some-one />
+
                 ';
         $domDocument = $this->testClass->parse($html);
         $this->assertEquals($html, $domDocument->getHtml());
@@ -294,6 +296,94 @@ HTML;
 </body>
 </html>
 
+HTML;
+        $domDocument = $this->testClass->parse($html);
+        $this->assertEquals($html, $domDocument->getHtml());
+    }
+
+    public function testCanParseScriptTags()
+    {
+        $html = <<<HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>replaceCurrency();</script>
+</head>
+<body>
+</body>
+</html>
+HTML;
+        $domDocument = $this->testClass->parse($html);
+        $this->assertEquals($html, $domDocument->getHtml());
+    }
+
+    public function testCanParseEmptyScriptTags()
+    {
+        $html = <<<HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script type="text/javascript" src="/js/carousel_unminify.js"></script>
+    <script type="text/javascript" src="/js/carousel_unminify1.js"></script>
+</head>
+<body>
+</body>
+</html>
+HTML;
+        $domDocument = $this->testClass->parse($html);
+        $this->assertEquals($html, $domDocument->getHtml());
+    }
+
+    public function testCanParseScriptCdataTags()
+    {
+        $html = <<<HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+</head>
+<body>
+
+    <script type="text/javascript">
+    //<![CDATA[
+    var BLANK_URL = 'https://cdn.com/js/blank.html';
+    var BLANK_IMG = 'https://cdn.com/js/spacer.gif';
+    //]]>
+    </script>
+</body>
+</html>
+HTML;
+        $domDocument = $this->testClass->parse($html);
+        $this->assertEquals($html, $domDocument->getHtml());
+    }
+
+    public function testCanParseScriptCdataCommentTags()
+    {
+        $html = <<<HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+</head>
+<body>
+    <!--[if lt IE 7]>
+    <script type="text/javascript">
+    //<![CDATA[
+    var BLANK_URL = '';
+    var BLANK_IMG = '';
+    //]]>
+    </script>
+    <![endif]-->
+    <!--[if gte IE 9 | !IE]><!-->
+<script src="jquery-2.1.1.min.js" type="text/javascript"></script>
+<!--<![endif]-->
+<!--[if lte IE 8]>
+<script src="jquery-1.11.1.min.js" type="text/javascript"></script>
+<![endif]-->
+<!--[if lte IE 8]>
+<script src="//cdn.com/media.match.min.js" type="text/javascript"></script>
+<script src="//cdnjs.es5-shim.min.js"></script>
+<![endif]-->
+</body>
+</html>
 HTML;
         $domDocument = $this->testClass->parse($html);
         $this->assertEquals($html, $domDocument->getHtml());

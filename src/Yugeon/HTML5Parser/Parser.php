@@ -109,7 +109,6 @@ class Parser
                     $hash = str_replace(self::REMOVED_SCRIPTS_TEMPLATE, '', $match['text']);
                     if (isset($this->removedScripts[$hash])) {
                         $textContent = $this->removedScripts[$hash];
-                        unset($this->removedScripts[$hash]);
                     }
                 }
 
@@ -305,7 +304,13 @@ class Parser
         $removedScripts = [];
         $scriptsCnt = 0;
         $template = static::REMOVED_SCRIPTS_TEMPLATE;
-        $html = preg_replace_callback("#<(script|template)\b([^>]*)>(.*?)</\\1>#is", function ($matches) use ($template, &$scriptsCnt, &$removedScripts) {
+        $html = preg_replace_callback("#<!--.*?-->|<(?<tag>script|template)\b([^>]*)>(.*?)</\\1>#is", function ($matches) use ($template, &$scriptsCnt, &$removedScripts) {
+            if (empty($matches['tag'])) {
+                return $matches[0];
+            }
+            if (empty($matches[3])) {
+                return $matches[0];
+            }
             $hash = md5($matches[3]);
             $result = "<{$matches[1]}{$matches[2]}>{$template}{$hash}</{$matches[1]}>";
             $removedScripts[$hash] = $matches[3];
