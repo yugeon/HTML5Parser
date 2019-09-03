@@ -11,7 +11,7 @@ class NodeAttributeTest extends TestCase {
     private $testClass;
 
     function setUp() {
-        $this->testClass = new NodeAttribute();
+        $this->testClass = new NodeAttribute('test');
     }
 
     public function testClassCanBeInstantiated() {
@@ -27,17 +27,16 @@ class NodeAttributeTest extends TestCase {
         $this->assertInstanceOf('Yugeon\Html5Parser\NodeAttributeInterface', $this->testClass);
     }
 
-    public function testCanSetGetAttributeName()
+    public function testCanGetAttributeName()
     {
-        $attributeName = 'class';
-        $this->testClass->setName($attributeName);
+        $this->testClass = new NodeAttribute($attributeName = 'class', 'red');
         $this->assertEquals($attributeName, $this->testClass->getName());
     }
 
-    public function testCanSetGetAttributeValueAsString()
+    public function testCanGetAttributeValueAsString()
     {
         $attributeValue = 'test-value';
-        $this->testClass->setValue($attributeValue);
+        $this->testClass = new NodeAttribute('class', $attributeValue);
         $this->assertEquals($attributeValue, $this->testClass->getValue());
     }
 
@@ -53,7 +52,7 @@ class NodeAttributeTest extends TestCase {
     public function testCanPreservWhitespacesInAttributeValue()
     {
         $attributeValue = '  test  value ';
-        $this->testClass->setValue($attributeValue);
+        $this->testClass = new NodeAttribute('test', $attributeValue);
         $this->assertEquals($attributeValue, $this->testClass->getValue());
     }
 
@@ -97,7 +96,7 @@ class NodeAttributeTest extends TestCase {
         ];
 
         foreach ($emptyValues as $value) {
-            $this->testClass->setValue($value);
+            $this->testClass = new NodeAttribute('test', $value);
             $this->assertEquals($value, $this->testClass->getValue());
         }
     }
@@ -128,11 +127,9 @@ class NodeAttributeTest extends TestCase {
             'id',
         ];
 
-        $this->testClass->setName('id');
-        $this->testClass->setQuotesSymbol('"');
-
         foreach ($emptyValues as $index => $value) {
-            $this->testClass->setValue($value);
+            $this->testClass = new NodeAttribute('id', $value);
+            $this->testClass->setQuotesSymbol('"');
             $this->assertEquals($expectedHtml[$index], $this->testClass->getHtml());
         }
     }
@@ -149,9 +146,18 @@ class NodeAttributeTest extends TestCase {
     public function testMustPreservQuotes()
     {
         $name = 'id';
-        $value = '" some-id "';
+        $value = "' some-id '";
         $this->testClass = new NodeAttribute($name, $value);
         $this->assertEquals("{$name}={$value}", $this->testClass->getHtml());
+    }
+
+    public function testCanReturnHtmlWithoutQuotes()
+    {
+        $name = 'id';
+        $value = 'some-id';
+        $this->testClass = new NodeAttribute($name, $value);
+        $this->testClass->setQuotesSymbol('');
+        $this->assertEquals("$name=$value", $this->testClass->getHtml());
     }
 
     public function testMustReturnValueWithoutQuotes()
@@ -167,6 +173,42 @@ class NodeAttributeTest extends TestCase {
         $signStr = ' = ';
         $this->testClass->setSignStr($signStr);
         $this->assertEquals($signStr, $this->testClass->getSignStr());
+    }
+
+    public function testCanUseSpecialCharsInValues()
+    {
+        $name = 'id';
+        $values = [
+            '',
+            'some&id',
+            'some&amp;id',
+            'some>id',
+            'some&gt;id',
+            'some"id',
+            'some&quot;id',
+            "some'id",
+            "some&apos;id",
+        ];
+
+        foreach ($values as $value) {
+            $this->testClass = new NodeAttribute($name, $value);
+            $this->assertEquals($value, $this->testClass->value);
+        }
+    }
+
+    public function testMustBeInstanceOfDomAttr()
+    {
+        $this->assertInstanceOf(\DOMAttr::class, $this->testClass);
+    }
+
+    public function testMustCorrectExtendsDomAtrr()
+    {
+        $name = 'id';
+        $value = 'some-id';
+        $this->testClass = new NodeAttribute($name, $value);
+
+        $this->assertEquals($name, $this->testClass->name);
+        $this->assertEquals($value, $this->testClass->value);
     }
 
 }

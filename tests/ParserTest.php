@@ -25,28 +25,32 @@ class ParserTest extends TestCase
         $this->assertTrue(get_class($this->testClass) == 'Yugeon\HTML5Parser\Parser');
     }
 
-    public function testCanGetParsedHtmlWithoutChanges()
+    public function testResultOfParseMustBeDomDocument()
     {
         $html = '<div><h1>Hello <br /> World</h1></div>';
-        $this->testClass->parse($html);
-        $this->assertEquals($html, $this->testClass->getHtml());
+        $this->assertInstanceOf(\DOMDocument::class, $this->testClass->parse($html));
     }
 
-    public function testCanGetResultsOfParsingAsCollectionOfNodes()
+    public function testCanGetParseResultAsDomDocument()
     {
         $html = '<div><h1>Hello <br /> World</h1></div>';
         $this->testClass->parse($html);
-        $this->assertInstanceOf('Yugeon\HTML5Parser\NodeCollection', $this->testClass->getNodes());
+
+        $this->assertInstanceOf(\DOMDocument::class, $this->testClass->getDomDocument());
+    }
+
+    public function testCanGetParsedHtmlWithoutChanges()
+    {
+        $html = '<div><h1>Hello <br/> World</h1></div>';
+        $this->testClass->parse($html);
+        $this->assertEquals($html, $this->testClass->getHtml());
     }
 
     public function testCanConsiderComments()
     {
         $html = '<div><!--h1>Hello <br /> World</h1--></div>';
         $this->testClass->parse($html);
-
-        $divNode = $this->testClass->getNodes()->item(0);
-        $commentNode = $divNode->getChilds()->item(0);
-        $this->assertEquals('!--', $commentNode->getTagName());
+        $this->assertEquals($html, $this->testClass->getHtml());
     }
 
     public function testCanConsiderBreakLineAndWhitspaces()
@@ -62,16 +66,15 @@ class ParserTest extends TestCase
         $this->assertEquals($html, $this->testClass->getHtml());
     }
 
-    // TODO: improve checks
     public function testCanConsiderScriptsAndTemplates()
     {
         $html = '<div>
                     <p>Hello</p>
                     <!-- comment -->
-                    <script type="text/javascript">
+                    <script>
                         var a = "<body></body>";
                     </script>
-                    <template id="abc">
+                    <template>
                         <div>hello</div>
                     </template>
                 </div>';
@@ -83,15 +86,16 @@ class ParserTest extends TestCase
     {
         $html = '<div>hello</div>';
         $this->testClass->parse($html);
-        $this->assertCount(1, $this->testClass->getNodes());
+        $this->assertEquals(1, $this->testClass->getDomDocument()->childNodes->length);
     }
 
     public function testCommentsNotCreateChildNodes()
     {
-        $html = '<!--[if gt IE 8]><!--><html lang="en"><!--<![endif]-->
+        $html = '<!--[if gt IE 8]><!--><html><!--<![endif]-->
                  </html>';
         $this->testClass->parse($html);
-        $this->assertCount(2, $this->testClass->getNodes());
+        $this->assertEquals($html, $this->testClass->getHtml());
+        $this->assertEquals(2, $this->testClass->getDomDocument()->childNodes->length);
     }
 
     public function testCanGetWorkTime()
@@ -101,64 +105,13 @@ class ParserTest extends TestCase
         $this->assertTrue(is_float($this->testClass->getWorkTime()));
     }
 
-    public function testNodesMustBeCollection()
-    {
-        $html = '<div><h1>Hello <br /> World</h1></div>';
-        $this->testClass->parse($html);
-        $this->assertTrue(get_class($this->testClass->getNodes()) == 'Yugeon\HTML5Parser\NodeCollection');
-    }
 
-    public function testMustBeSetRightNestingLevel()
-    {
-        $html = '<div>
-                    <p>Hello</p>
-                    <!-- comment -->
-                    <script type="text/javascript">
-                        var a = "<body></body>";
-                    </script>
-                    <template id="abc">
-                        <div>hello</div>
-                    </template>
-                </div>';
-        $this->testClass->parse($html);
-        $nodes = $this->testClass->getNodes();
-        $div = $nodes->item(0);
-        $this->assertEquals(0, $div->getLevel()); // <div>
-        $this->assertEquals(1, $div->getChilds()->item(0)->getLevel()); // <p>
-        $this->assertEquals(1, $div->getChilds()->item(1)->getLevel()); // <!-- comment -->
-        $this->assertEquals(1, $div->getChilds()->item(2)->getLevel()); // <!-- script -->
-        $this->assertEquals(1, $div->getChilds()->item(3)->getLevel()); // <!-- template -->
-    }
-
-    public function testParentNodeOfEndNodeMustBeSameNode()
+    public function testTextNodeMustCreateSeparateNode()
     {
         $html = '<div>Hello</div>World';
         $this->testClass->parse($html);
-        $this->assertEquals(
-            $this->testClass->getNodes()->item(0),
-            $this->testClass->getNodes()->item(0)->getEndNode()->getParent()
-        );
-    }
-
-    // TODO: need level?
-    public function _testEndNodeLevelMustBeSameAsParentNode()
-    {
-        $html = '<div>
-                    <span>Hello</span>World
-                 </div>';
-        $this->testClass->parse($html);
-
-        $span = $this->testClass->getNodes()->item(0)->getChilds()->item(0);
-        $this->assertEquals(1, $span->getEndNode()->getLevel());
-        $span->setLevel(2);
-        $this->assertEquals(2, $span->getEndNode()->getLevel());
-    }
-
-    public function testEndNodeCannotHaveChilds()
-    {
-        $html = '<div>Hello</div>World<br />';
-        $this->testClass->parse($html);
-        $this->assertCount(0, $this->testClass->getNodes()->item(0)->getEndNode()->getChilds());
+        $this->assertEquals(2, $this->testClass->getDomDocument()->childNodes->length);
+        $this->assertEquals($html, $this->testClass->getHtml());
     }
 
     public function testMustCorrectParseTagsWithAnyAttributes()
@@ -166,18 +119,103 @@ class ParserTest extends TestCase
         $html = '<div class="red>green">Hello</div>';
         $this->testClass->parse($html);
 
-        $this->assertCount(1, $this->testClass->getNodes());
+        $this->assertEquals(1, $this->testClass->getDomDocument()->childNodes->length);
 
-        $this->assertEquals('div', $this->testClass->getNodes()->item(0)->getTagName());
+        $this->assertEquals('div', $this->testClass->getDomDocument()->childNodes->item(0)->tagName);
         $this->assertEquals($html, $this->testClass->getHtml());
     }
 
     public function testMustPreservWhitespacesBeforeDoctype()
     {
         $html = '
-            <!doctype html>
+            <!DOCTYPE html>
             <html></html>
         ';
+        $this->testClass->parse($html);
+        $this->assertEquals($html, $this->testClass->getHtml());
+    }
+
+    public function testMustClearDocumentBeforeParse()
+    {
+        $html = '<div class="red">Hello</div>';
+        $this->testClass->parse($html);
+
+        $html = '<div class="red">Hello</div>';
+        $this->testClass->parse($html);
+        $this->assertEquals($html, $this->testClass->getHtml());
+    }
+
+    public function testCanParseAttributes()
+    {
+        $html = '<div id="2" class="red" custom-attr=\'hello world\'>';
+        $this->testClass->parse($html);
+        $this->assertEquals($html, $this->testClass->getHtml());
+    }
+
+
+    public function testCanParseOneTag()
+    {
+        $html = '<div>';
+        $this->testClass->parse($html);
+        $this->assertEquals($html, $this->testClass->getHtml());
+    }
+
+    public function testCanParseComments()
+    {
+        $html = '<!-- abrakadabra -->';
+        $this->testClass->parse($html, true);
+        $this->assertEquals($html, $this->testClass->getHtml());
+    }
+
+    public function testCanParseDoctype()
+    {
+        $html = '<!DOCTYPE html>';
+        $this->testClass->parse($html);
+        $this->assertEquals($html, $this->testClass->getHtml());
+    }
+
+    public function testCanParseCommentsBeforeDoctype()
+    {
+        $html = '<!-- comment -->
+                <!DOCTYPE html>';
+        $this->testClass->parse($html);
+        $this->assertEquals($html, $this->testClass->getHtml());
+    }
+
+    public function testCanParseTagsWithWhitespaces()
+    {
+        $html = '<div  id="abc">';
+        $this->testClass->parse($html);
+        $this->assertEquals($html, $this->testClass->getHtml());
+    }
+
+    public function testCanParseSelfClosingTags()
+    {
+        $html = '<br />';
+        $this->testClass->parse($html);
+        $this->assertEquals($html, $this->testClass->getHtml());
+    }
+
+    public function testCanRestoreOriginalTagWithWhitespaces()
+    {
+        $html = '<div  id="abc" >';
+        $this->testClass->parse($html);
+        $this->assertEquals($html, $this->testClass->getHtml());
+    }
+
+    public function testIgnoreNotHtmlTags()
+    {
+        $html = '<?xml version="1.0" encoding="UTF-8"?>';
+        $this->testClass->parse($html);
+        $this->assertEquals('', $this->testClass->getHtml());
+    }
+
+    public function testCanParseCustomTags()
+    {
+        $html = '<custom-tag>some text</custom-tag>
+                <yet-another-custom-tag />
+                <and-some-one>
+                ';
         $this->testClass->parse($html);
         $this->assertEquals($html, $this->testClass->getHtml());
     }

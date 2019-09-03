@@ -2,24 +2,34 @@
 
 namespace Yugeon\HTML5Parser;
 
-class NodeAttribute implements NodeAttributeInterface
+class NodeAttribute extends \DOMAttr implements NodeAttributeInterface
 {
-    /** @var string */
-    protected $stringValue = '';
+    /**
+     * Track whether this is an empty attribute.
+     *
+     * @var string|null
+     */
+    protected $origValue = null;
 
-    /** @var string */
-    protected $name = '';
-
-    /** @var string|null */
-    protected $value = null;
-
-    /** @var string */
+    /**
+     * Whitespaces before attribute name.
+     *
+     * @var string
+     */
     protected $preservedWhitespace = '';
 
-    /** @var string|null */
+    /**
+     * Equal sign and whitespaces around it.
+     *
+     * @var string|null
+     */
     protected $signStr = null;
 
-    /** @var string */
+    /**
+     * Quotes symbol around attribute value. Default - no quotes.
+     *
+     * @var string
+     */
     protected $quotesSymbol = '';
 
     /**
@@ -31,31 +41,18 @@ class NodeAttribute implements NodeAttributeInterface
      * @param string|null $signStr Equal sign and whitespaces around it
      * @param string $quotesSymbol Quotes symbol around attribute value. Default - no quotes.
      */
-    public function __construct($name = '', $value = null, $whitespaceBefore = '', $signStr = null, $quotesSymbol = '')
+    public function __construct($name, $value = null, $whitespaceBefore = '', $signStr = null, $quotesSymbol = '')
     {
-        if (!empty($name)) {
-            $this->setName($name);
-        }
 
-        if (!is_null($value)) {
-            $this->setValue($value);
-        }
+        $this->origValue = $value;
 
-        if (!empty($whitespaceBefore)) {
-            $this->preservedWhitespace = $whitespaceBefore;
-        }
+        $this->preservedWhitespace = $whitespaceBefore;
 
         $this->setSignStr($signStr);
 
         $this->setQuotesSymbol($quotesSymbol);
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function setName($name)
-    {
-        $this->name = $name;
+        parent::__construct($name, $value);
     }
 
     /**
@@ -64,14 +61,6 @@ class NodeAttribute implements NodeAttributeInterface
     public function getName()
     {
         return $this->name;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function setValue($value)
-    {
-        $this->value = $value;
     }
 
     /**
@@ -130,10 +119,10 @@ class NodeAttribute implements NodeAttributeInterface
     public function getHtml()
     {
         $html = $this->preservedWhitespace;
-        if (!is_null($this->value)) {
-            $html .= $this->name . (!is_null($this->signStr) ? $this->signStr : '=') . $this->quotesSymbol . $this->value . $this->quotesSymbol;
+        if (!is_null($this->origValue)) {
+            $html .= $this->getName() . (!is_null($this->signStr) ? $this->signStr : '=') . $this->quotesSymbol . $this->getValue() . $this->quotesSymbol;
         } else {
-            $html .= $this->name . (!is_null($this->signStr) ? $this->signStr : '');
+            $html .= $this->getName() . (!is_null($this->signStr) ? $this->signStr : '');
         }
 
         return $html;

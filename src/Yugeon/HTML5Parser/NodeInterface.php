@@ -7,13 +7,12 @@ namespace Yugeon\HTML5Parser;
  */
 interface NodeInterface
 {
-
     /**
-     * True if current node is doctype.
+     * True if current node is text node.
      *
      * @return boolean
      */
-    public function isDoctype();
+    public function isTextNode();
 
     /**
      * True if current node is comment.
@@ -23,11 +22,18 @@ interface NodeInterface
     public function isComment();
 
     /**
-     * Getting node tag name.
+     * True if current node is element.
      *
-     * @return string
+     * @return boolean
      */
-    public function getTagName();
+    public function isElement();
+
+    /**
+     * True if current node is doctype.
+     *
+     * @return boolean
+     */
+    public function isDoctype();
 
     /**
      * True if current node is self closing tag.
@@ -50,118 +56,4 @@ interface NodeInterface
      */
     public function getInnerHtml();
 
-    /**
-     * Set parent node
-     *
-     * @param NodeInterface $node
-     * @return void
-     */
-    public function setParent($node);
-
-    /**
-     * Getting parent node.
-     *
-     * @return NodeInterface
-     */
-    public function getParent();
-
-    /**
-     * Add child node.
-     *
-     * @param  NodeInterface $node
-     * @return void
-     */
-    public function addNode($node);
-
-    /**
-     * Add child nodes.
-     *
-     * @param NodeInterface[] $nodes
-     * @return void
-     */
-    public function addNodes($nodes);
-
-    /**
-     * Add end node for this node.
-     *
-     * @param NodeInterface $node
-     * @return void
-     */
-    public function addEndNode($node);
-
-    /**
-     * Getting end node for this node.
-     *
-     * @return NodeInterface|null
-     */
-    public function getEndNode();
-
-    /**
-     * Getting instance for child nodes.
-     *
-     * @return NodeCollectionInterface
-     */
-    public function getChilds();
-
-    // TODO: methods work around child nodes
-
-    /**
-     * Set level of this node.
-     *
-     * @param int $level
-     * @return void
-     */
-    public function setLevel($level);
-
-    /**
-     * Getting current level of this node.
-     *
-     * @return int
-     */
-    public function getLevel();
-
-    /**
-     * Getting an instance that represents node attributes.
-     *
-     * @return NodeAttributesInterface
-     */
-    public function getAttributes();
-
-    /**
-     * Getting an instance that represent sepcific attribute.
-     *
-     * @param string $name
-     * @return NodeAttributeInterface
-     */
-    public function getAttribute($name);
-
-    /**
-     * Checks if current node has an attributes.
-     *
-     * @return boolean
-     */
-    public function hasAttributes();
-
-    /**
-     * Checks if current node has a specific attribute.
-     *
-     * @param string $name
-     * @return boolean
-     */
-    public function hasAttribute($name);
-
-    /**
-     * Remove a specific attribute from the current node.
-     *
-     * @param string $name
-     * @return void
-     */
-    public function removeAttribute($name);
-
-    /**
-     * Clear all attributes from the current node.
-     *
-     * @return void
-     */
-    public function clearAttributes();
 }

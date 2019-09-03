@@ -9,27 +9,11 @@ interface NodeAttributeInterface
 {
 
     /**
-     * Set attribute name.
-     *
-     * @param string $name
-     * @return void
-     */
-    public function setName($name);
-
-    /**
      * Getting an attribute name.
      *
      * @return string
      */
     public function getName();
-
-    /**
-     * Set attribute value without quotes
-     *
-     * @param string|null $value If value is null, then attribute is empty
-     * @return void
-     */
-    public function setValue($value);
 
     /**
      * Getting an attribute value without quotes
