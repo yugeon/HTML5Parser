@@ -112,7 +112,7 @@ class Parser
                     }
                 }
 
-                $textNode = new TextNode($textContent);
+                $textNode = new TextNode($textContent, false);
                 $parentNode->appendChild($textNode);
             }
         }

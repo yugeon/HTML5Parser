@@ -86,4 +86,25 @@ class TextNodeTest extends TestCase
         $this->assertEquals('#text', $this->testClass->nodeName);
     }
 
+    public function testCanAutoEncodeSpecialChars()
+    {
+        $text = '< > & \' "';
+        $this->testClass = new TextNode($text);
+        $this->assertEquals('&lt; &gt; &amp; &apos; &quot;', $this->testClass->nodeValue);
+    }
+
+    public function testNotDecodeTwiceSpecialChars()
+    {
+        $text = '&lt; &gt; &amp; &apos; &quot;';
+        $this->testClass = new TextNode($text);
+        $this->assertEquals($text, $this->testClass->nodeValue);
+    }
+
+    public function testCanDisableAutoEncodeSpecialChars()
+    {
+        $text = '< > & \' "';
+        $this->testClass = new TextNode($text, false);
+        $this->assertEquals($text, $this->testClass->nodeValue);
+    }
+
 }
