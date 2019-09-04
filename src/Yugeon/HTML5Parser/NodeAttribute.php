@@ -74,6 +74,22 @@ class NodeAttribute extends \DOMAttr implements NodeAttributeInterface
     /**
      * {@inheritDoc}
      */
+    public function setPreservedWhitespace($ws)
+    {
+        $this->preservedWhitespace = $ws;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getPreservedWhitespace()
+    {
+        return $this->preservedWhitespace;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function setSignStr($signStr)
     {
         $this->signStr = $signStr;

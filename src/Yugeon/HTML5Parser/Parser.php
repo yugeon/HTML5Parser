@@ -160,10 +160,10 @@ class Parser
             }
 
             if (isset($matches['attr'])) {
-                if (preg_match('#\s*#s', $matches['attr'])) {
-                    $node->setWhitespaces($matches['attr']);
+                if (preg_match('#^\s*$#s', $matches['attr'])) {
+                    $node->setWhitespaceAfter($matches['attr']);
                 } else {
-                    $attributesArr = $this->parseAttributes($matches['attr']);
+                    $attributesArr = $this->parseAttributes($matches['attr'], $node);
                     foreach ($attributesArr as $attr) {
                         /** @var ElementNode $node */
                         $node->setAttributeNode($attr);
@@ -180,9 +180,10 @@ class Parser
      * @example 'id="abc" class="red" href="//site.domain/" disabled'
      *
      * @param string $attrStr
+     * @param ElementNode $parentNode
      * @return NodeAttribute[]
      */
-    public function parseAttributes($attrStr)
+    public function parseAttributes($attrStr, $parentNode)
     {
         if (empty($attrStr)) {
             return [];
@@ -195,7 +196,7 @@ class Parser
             PREG_SET_ORDER
         )) {
             if (isset($matches)) {
-                return $this->buildAttributes($matches);
+                return $this->buildAttributes($matches, $parentNode);
             }
         }
     }
@@ -204,15 +205,19 @@ class Parser
      * Build attributes collection
      *
      * @param array $attrs
+     * @param ElementNode $parentNode
      * @return NodeAttribute[]
      */
-    protected function buildAttributes($attrs)
+    protected function buildAttributes($attrs, $parentNode)
     {
         $attributesArr = [];
 
         foreach ($attrs as $attr) {
             // process first or last whitespaces
             if (!isset($attr['name'])) {
+                if (isset($attr['ws'])) {
+                    $parentNode->setWhitespaceAfter($attr['ws']);
+                }
                 continue;
             }
 
@@ -232,9 +237,8 @@ class Parser
             }
 
             $signStr = !empty($attr['sign']) ? $attr['sign'] : null;
-            $whitespaceBefore = !empty($attr['ws']) ? $attr['ws'] : '';
+            $whitespaceBefore = isset($attr['ws']) ? $attr['ws'] : '';
 
-            // $this->addAttribute(new $this->nodeAttributeClassName($name, $value, $whitespaceBefore, $signStr, $quotesSymbol));
             $attributesArr[] = new NodeAttribute($name, $value, $whitespaceBefore, $signStr, $quotesSymbol);
         }
 

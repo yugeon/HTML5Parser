@@ -23,6 +23,21 @@ interface NodeAttributeInterface
     public function getValue();
 
     /**
+     * Set whitespace before attriubte name.
+     *
+     * @param string $ws
+     * @return void
+     */
+    public function setPreservedWhitespace($ws);
+
+    /**
+     * Getting whitespace before attriubte name.
+     *
+     * @return string
+     */
+    public function getPreservedWhitespace();
+
+    /**
      * Set equal sign and whitespaces around it.
      * @example ' = '
      *

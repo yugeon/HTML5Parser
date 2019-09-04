@@ -37,11 +37,18 @@ interface ElementNodeInterface
     public function setAttribute($name, $value, $whitespaceBefore = '', $signStr = null, $quotesSymbol = '');
 
     /**
-     * Set whitespaces after the tag name if there are no attributes
+     * Set whitespace after the attributes if there are exists.
      *
      * @param string $ws
      * @return void
      */
-    public function setWhitespaces($ws);
+    public function setWhitespaceAfter($ws);
+
+    /**
+     * Getting whitespace after the attributes if there are exists.
+     *
+     * @return string
+     */
+    public function getWhitespaceAfter();
 
 }

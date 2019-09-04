@@ -105,7 +105,7 @@ class ElementNodeTest extends TestCase
     {
         $this->testClass = new ElementNode('br');
         $this->testClass->setSelfClosing(true);
-        $this->testClass->setWhitespaces(' ');
+        $this->testClass->setWhitespaceAfter(' ');
 
         $htmlNode = '<br />';
         $this->assertEquals('br', $this->testClass->tagName);
@@ -199,6 +199,15 @@ class ElementNodeTest extends TestCase
         $this->testClass->setAttributeNode($attr);
         $this->testClass->removeAttribute('id');
         $this->assertFalse($this->testClass->hasAttribute('id'));
+    }
+
+    public function testCanParseTagWithWhitespaceAfterAttributes()
+    {
+        $this->testClass->setWhitespaceAfter(' ');
+        $attr = new NodeAttribute('id', 'z', ' ', null, '"');
+        $this->testClass->setAttributeNode($attr);
+        $htmlNode = '<div id="z" >';
+        $this->assertEquals($htmlNode, $this->testClass->getHtml());
     }
 
     public function testMustAutoCloseTagIfChildNodesExist()

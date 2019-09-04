@@ -5,6 +5,8 @@ namespace Yugeon\HTML5Parser\Tests;
 use PHPUnit\Framework\TestCase;
 use Yugeon\HTML5Parser\DomDocumentInterface;
 use Yugeon\HTML5Parser\Parser;
+use Yugeon\HTML5Parser\ElementNode;
+use Yugeon\HTML5Parser\NodeAttribute;
 
 class ParserTest extends TestCase
 {
@@ -199,6 +201,12 @@ class ParserTest extends TestCase
         $html = '<div  id="abc">';
         $domDocument = $this->testClass->parse($html);
         $this->assertEquals($html, $domDocument->getHtml());
+
+        /** @var ElementNode $divEl */
+        $divEl = $this->testClass->getDomDocument()->childNodes->item(0);
+        /** @var NodeAttribute $idAttr */
+        $idAttr = $divEl->getAttributeNode('id');
+        $this->assertEquals('  ', $idAttr->getPreservedWhitespace());
     }
 
     public function testCanParseSelfClosingTags()
@@ -206,6 +214,9 @@ class ParserTest extends TestCase
         $html = '<br />';
         $domDocument = $this->testClass->parse($html);
         $this->assertEquals($html, $domDocument->getHtml());
+        /** @var ElementNode $tag */
+        $tag = $domDocument->childNodes->item(0);
+        $this->assertEquals(' ', $tag->getWhitespaceAfter());
     }
 
     public function testCanRestoreOriginalTagWithWhitespaces()
@@ -213,6 +224,12 @@ class ParserTest extends TestCase
         $html = '<div  id="abc" >';
         $domDocument = $this->testClass->parse($html);
         $this->assertEquals($html, $domDocument->getHtml());
+
+        /** @var ElementNode $divEl */
+        $divEl = $this->testClass->getDomDocument()->childNodes->item(0);
+        /** @var NodeAttribute $idAttr */
+        $idAttr = $divEl->getAttributeNode('id');
+        $this->assertEquals('  ', $idAttr->getPreservedWhitespace());
     }
 
     public function testIgnoreNotHtmlTags()

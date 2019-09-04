@@ -14,7 +14,7 @@ class ElementNode extends \DOMElement implements NodeInterface, ElementNodeInter
     public $isSelfClosingTag = false;
 
     /** @var string */
-    protected $whitespaces = '';
+    protected $whitespaceAfter = '';
 
     /**
      * Collection for fix refs to attributes object.
@@ -104,9 +104,17 @@ class ElementNode extends \DOMElement implements NodeInterface, ElementNodeInter
     /**
      * {@inheritDoc}
      */
-    public function setWhitespaces($ws)
+    public function setWhitespaceAfter($ws)
     {
-        $this->whitespaces = $ws;
+        $this->whitespaceAfter = $ws;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getWhitespaceAfter()
+    {
+        return $this->whitespaceAfter;
     }
 
     /**
@@ -138,8 +146,8 @@ class ElementNode extends \DOMElement implements NodeInterface, ElementNodeInter
         return
             "<" . ($this->isEndTag ? '/' : '')
             . $this->tagName
-            . $this->whitespaces
             . $this->_getAttributesHtml()
+            . $this->getWhitespaceAfter()
             . ($this->isSelfClosingTag ? '/' : '')
             . '>';
     }
