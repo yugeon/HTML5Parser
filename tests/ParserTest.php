@@ -239,18 +239,18 @@ class ParserTest extends TestCase
         $this->assertEquals('  ', $idAttr->getPreservedWhitespace());
     }
 
-    public function testIgnoreNotHtmlTags()
+    public function testMustPreserveNotCorrectHtmlTags()
     {
         $html = '<?xml version="1.0" encoding="UTF-8"?>';
         $domDocument = $this->testClass->parse($html);
-        $this->assertEquals('', $domDocument->getHtml());
+        $this->assertEquals($html, $domDocument->getHtml());
     }
 
-    public function testIgnoreInvalidTags()
+    public function testMustPreserveInvalidTagsAsText()
     {
-        $html = '< div>hello </div>';
+        $html = '<#div>hello </div>';
         $domDocument = $this->testClass->parse($html);
-        $this->assertEquals('', $domDocument->getHtml());
+        $this->assertEquals($html, $domDocument->getHtml());
     }
 
     public function testCanParseCustomTags()
@@ -341,20 +341,18 @@ HTML;
         $this->assertEquals($html, $domDocument->getHtml());
     }
 
-    public function testMustCloseOnlyPairTag()
+    public function testMustPreseveUnpairCloseTags()
     {
         $html = '<div> hello </span> world</div>';
-        $expected = '<div> hello  world</div>';
         $domDocument = $this->testClass->parse($html);
-        $this->assertEquals($expected, $domDocument->getHtml());
+        $this->assertEquals($html, $domDocument->getHtml());
     }
 
     public function testCanIgnoreCloseTagForSelfClosingTags()
     {
         $html = "<img src='https://rover.ebay.com/roversync/?&mpt=1567612636909'></img>";
-        $expected = "<img src='https://rover.ebay.com/roversync/?&mpt=1567612636909'>";
         $domDocument = $this->testClass->parse($html);
-        $this->assertEquals($expected, $domDocument->getHtml());
+        $this->assertEquals($html, $domDocument->getHtml());
     }
 
     public function testCanParseAttributesWithNS()

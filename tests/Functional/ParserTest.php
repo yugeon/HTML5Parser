@@ -71,7 +71,7 @@ class ParserTest extends TestCase {
             $html .= $dom->saveHTML($node);
         }
 
-        file_put_contents(__DIR__ . '/../assets/output2.html', $html);
+        // file_put_contents(__DIR__ . '/../assets/output2.html', $html);
     }
 
     public function _testParserWarmUp()

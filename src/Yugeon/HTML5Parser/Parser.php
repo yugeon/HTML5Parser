@@ -83,13 +83,23 @@ class Parser implements ParserInterface
                         $parentNode->addEndTag($match['node']);
                         $parentNode = $parentNode->parentNode;
                     } else {
-                        // try find parent for this tag
-                        if ('div' === $match['tag']) {
+                        // try find parent for this tag it this tag not self closing
+                        $isFind = false;
+                        $tempNode = new ElementNode($match['tag']);
+                        if (!$tempNode->isSelfClosingTag()) {
                             if ($parentNode && $parentNode->parentNode && $parentNode->parentNode instanceof ElementNodeInterface && $parentNode->parentNode->tagName === $match['tag']) {
                                 $parentNode = $parentNode->parentNode;
                                 $parentNode->addEndTag($match['node']);
                                 $parentNode = $parentNode->parentNode;
+                                $isFind = true;
                             }
+                        }
+
+                        if (!$isFind) {
+                            // add as text node
+                            $isDoEncoding = false;
+                            $textNode = new TextNode($match['node'], $isDoEncoding);
+                            $parentNode->appendChild($textNode);
                         }
                     }
 
@@ -171,6 +181,10 @@ class Parser implements ParserInterface
                 try {
                     $node = new ElementNode($matches['tag']);
                 } catch (\Exception $e) {
+                    // try add as text node
+                    $isDoEncoding = false;
+                    $node = new TextNode($stringValue, $isDoEncoding);
+                    $parentNode->appendChild($node);
                     return null;
                 }
 
