@@ -86,25 +86,40 @@ class TextNodeTest extends TestCase
         $this->assertEquals('#text', $this->testClass->nodeName);
     }
 
-    public function testCanAutoEncodeSpecialChars()
+    public function testCanEncodeSpecialChars()
     {
         $text = '< > & \' "';
-        $this->testClass = new TextNode($text);
+        $this->testClass = new TextNode($text, true);
         $this->assertEquals('&lt; &gt; &amp; &apos; &quot;', $this->testClass->nodeValue);
     }
 
     public function testNotDecodeTwiceSpecialChars()
     {
         $text = '&lt; &gt; &amp; &apos; &quot;';
+        $this->testClass = new TextNode($text, true);
+        $this->assertEquals($text, $this->testClass->nodeValue);
+    }
+
+    public function testDefaultNotEncodeSpecialChars()
+    {
+        $text = '< > & \' "';
         $this->testClass = new TextNode($text);
         $this->assertEquals($text, $this->testClass->nodeValue);
     }
 
-    public function testCanDisableAutoEncodeSpecialChars()
+    public function testGetHtmlMustPreserveSpecialChars()
     {
         $text = '< > & \' "';
-        $this->testClass = new TextNode($text, false);
-        $this->assertEquals($text, $this->testClass->nodeValue);
+        $this->testClass = new TextNode($text, true);
+        $this->assertEquals('&lt; &gt; &amp; &apos; &quot;', $this->testClass->getHtml());
+    }
+
+    public function testCanNormalizeHtmlEntities()
+    {
+        $text = "Off—Are · Deals – All Copyright &#xA9;";
+        $expected = "Off&mdash;Are &middot; Deals &ndash; All Copyright &copy;";
+        $this->testClass = new TextNode($text, true);
+        $this->assertEquals($expected, $this->testClass->getHtml());
     }
 
 }

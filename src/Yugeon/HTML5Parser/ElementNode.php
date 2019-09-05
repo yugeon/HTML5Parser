@@ -127,9 +127,9 @@ class ElementNode extends \DOMElement implements NodeInterface, ElementNodeInter
         $innerHtml = $this->getInnerHtml();
         $html .= $innerHtml;
 
-        if (!empty($innerHtml) && empty($this->endTag)) {
-                $html .= "</{$this->tagName}>";
-        }
+        // if (strlen($innerHtml) > 0 && empty($this->endTag)) {
+        //         $html .= "</{$this->tagName}>";
+        // }
 
         $html .= ($this->endTag ? $this->endTag : '');
 
@@ -203,6 +203,11 @@ class ElementNode extends \DOMElement implements NodeInterface, ElementNodeInter
      */
     public function setAttributeNode($attr)
     {
+        // ignore doubles
+        if ($this->hasAttribute($attr->name)) {
+            return null;
+        }
+
         // fix ref to attribute object
         $this->_attrs[$attr->name] = $attr;
         return parent::setAttributeNode($attr);

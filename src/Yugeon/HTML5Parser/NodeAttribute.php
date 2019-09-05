@@ -39,9 +39,10 @@ class NodeAttribute extends \DOMAttr implements NodeAttributeInterface
      * @param string|null $value Value of attribute, if null - attribute is empty
      * @param string $whitespaceBefore Whitespaces before attribute name
      * @param string|null $signStr Equal sign and whitespaces around it
-     * @param string $quotesSymbol Quotes symbol around attribute value. Default - no quotes.
+     * @param string $quotesSymbol Quotes symbol around attribute value. Default - double quotes.
+     * @param string $doEncode Autoescape values.
      */
-    public function __construct($name, $value = null, $whitespaceBefore = '', $signStr = null, $quotesSymbol = '')
+    public function __construct($name, $value = null, $whitespaceBefore = '', $signStr = null, $quotesSymbol = '"', $doEncode = false)
     {
 
         $this->origValue = $value;
@@ -51,6 +52,11 @@ class NodeAttribute extends \DOMAttr implements NodeAttributeInterface
         $this->setSignStr($signStr);
 
         $this->setQuotesSymbol($quotesSymbol);
+
+        if ($doEncode) {
+            $value = $this->htmlDecode($value);
+            $value = $this->htmlEncode($value);
+        }
 
         parent::__construct($name, $value);
     }
@@ -142,5 +148,16 @@ class NodeAttribute extends \DOMAttr implements NodeAttributeInterface
         }
 
         return $html;
+    }
+
+    protected function htmlDecode($string) {
+        return html_entity_decode($string, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    }
+
+    protected function htmlEncode($string)
+    {
+        $string = htmlentities($string, ENT_QUOTES | ENT_XML1, 'UTF-8');
+        $string = mb_convert_encoding($string, 'HTML-ENTITIES', 'UTF-8');
+        return $string;
     }
 }

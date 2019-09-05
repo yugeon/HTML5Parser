@@ -150,6 +150,19 @@ class ElementNodeTest extends TestCase
         $this->assertEquals('<div><br><div></div></div>', $this->testClass->getHtml());
     }
 
+    public function testCanCorrectRestoreTwoChildTextNodes()
+    {
+        $this->testClass->addEndTag('</div>');
+
+        $a = new TextNode('Hello');
+        $b = new TextNode(' world');
+
+        $this->testClass->appendChild($a);
+        $this->testClass->appendChild($b);
+
+        $this->assertEquals('<div>Hello world</div>', $this->testClass->getHtml());
+    }
+
     public function testCanAddGetAttributeNode()
     {
         $attr = new NodeAttribute('id', 'z', ' ', ' = ', "'");
@@ -210,11 +223,11 @@ class ElementNodeTest extends TestCase
         $this->assertEquals($htmlNode, $this->testClass->getHtml());
     }
 
-    public function testMustAutoCloseTagIfChildNodesExist()
+    public function testDontAutoCloseTagIfChildNodesExist()
     {
         $childEl = new TextNode('hello');
         $this->testClass->appendChild($childEl);
-        $this->assertEquals('<div>hello</div>', $this->testClass->getHtml());
+        $this->assertEquals('<div>hello', $this->testClass->getHtml());
     }
 
     public function testMustPreserveRefToChildNodes()

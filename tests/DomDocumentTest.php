@@ -58,7 +58,7 @@ class DomDocumentTest extends TestCase
         $divEl = new ElementNode('div');
         $this->testClass->appendChild($divEl);
         $divEl->appendChild(new TextNode('hello'));
-        $this->assertEquals('<div>hello</div>', $this->testClass->getHtml());
+        $this->assertEquals('<div>hello', $this->testClass->getHtml());
     }
 
     public function testCanGetHtmlOfSpecificNode()
@@ -70,7 +70,7 @@ class DomDocumentTest extends TestCase
         $divEl->appendChild($spanEl);
         $spanEl->appendChild(new TextNode('hello'));
 
-        $this->assertEquals('<span>hello</span>', $this->testClass->getHtml($spanEl));
+        $this->assertEquals('<span>hello', $this->testClass->getHtml($spanEl));
     }
 
     public function testCanSetPreservedDocumentWhitespace()

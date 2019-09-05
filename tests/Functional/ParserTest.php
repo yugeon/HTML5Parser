@@ -12,7 +12,7 @@ class ParserTest extends TestCase {
     static private $testContent;
 
     static function setUpBeforeClass() {
-        self::$testContent = file_get_contents(__DIR__ . '/../assets/ebay.html');
+        self::$testContent = file_get_contents(__DIR__ . '/../assets/ebay2.html');
     }
 
     // function setUp() {
@@ -66,6 +66,12 @@ class ParserTest extends TestCase {
         libxml_disable_entity_loader($disableEntities);
 
         dump('DOMDocument', microtime(true) - $start);
+        $html = '';
+        foreach ($dom->childNodes as $node) {
+            $html .= $dom->saveHTML($node);
+        }
+
+        file_put_contents(__DIR__ . '/../assets/output2.html', $html);
     }
 
     public function _testParserWarmUp()
@@ -79,9 +85,11 @@ class ParserTest extends TestCase {
     public function testParserOnRealPage()
     {
         $this->testClass = new Parser();
+        // $this->testClass->setAutoescapeTextNodes(true);
         $this->testClass->parse(static::$testContent);
         dump('This Parser', $this->testClass->getWorkTime());
-        file_put_contents(__DIR__ . '/../assets/output.html', $this->testClass->getHtml());
+        $html = $this->testClass->getHtml();
+        file_put_contents(__DIR__ . '/../assets/output.html', $html);
     }
 
 }

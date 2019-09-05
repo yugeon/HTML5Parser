@@ -2,7 +2,7 @@
 
 namespace Yugeon\HTML5Parser;
 
-class Parser
+class Parser implements ParserInterface
 {
     const REMOVED_SCRIPTS_TEMPLATE = 'XRMG83jy_';
 
@@ -19,11 +19,13 @@ class Parser
     /** @var float */
     protected $startTime = 0;
 
+    /** @var bool */
+    protected $isAutoescapeTextNodes  = false;
+
+    public $isDebug = false;
+
     /**
-     * Parse input html.
-     *
-     * @param string $html Input html.
-     * @return \DOMDocument
+     * {@inheritDoc}
      */
     public function parse($html)
     {
@@ -34,7 +36,11 @@ class Parser
         $html = $this->preserveScripts($html);
 
         if (false !== preg_match_all(
-            '#(?:(?<comment><!--.*?-->)|(?<node><(?<end1>/)?(?:[^\'">]+|".*?"|\'.*?\')+>))(?<text>[^<]*)#is',
+            // '#(?:(?<comment><!--.*?-->)|(?<node><(?<end1>/)?(?:[^\'">]+|".*?"|\'.*?\')+>))(?<text>[^<]*)#is',
+            // '#(?:(?<comment><!--.*?-->)|(?<node><(?<end1>/)?(?:[^\'">]+|\s*=\s*".*?"|\s*=\s*\'.*?\')+>))(?<text>[^<]*)#is',
+            // '#(?:(?<comment><!--.*?-->)|(?<node><(?<end1>/)?(?:[^\'=">]*(?:=\s*(?:".*?"|\'.*?\'))?)*>))(?<text>[^<]*)#is',
+//            '#(?:(?<comment><!--.*?-->)|(?<node><(?<end1>/)?(?<tag>[^\s>/]+)\s*(?:[\s\w-<:]+(?:=\s*(?:".*?"|\'.*?\'|[^>\s]+)?)?)*\s*/? >))(?<text>[^<]*)#is',
+            '#(?:(?<comment><!--.*?-->)|(?<node><(?<end1>/)?(?<tag>[^\s>/]+)\s*(?:[^=>]+(?:=\s*(?:".*?"|\'.*?\'|[^>\s]+)?)?)*\s*/?>))(?<text>[^<]*)#is',
             $html,
             $matches,
             PREG_SET_ORDER
@@ -48,9 +54,7 @@ class Parser
     }
 
     /**
-     * Clear the parser for reuse.
-     *
-     * @return void
+     * {@inheritDoc}
      */
     public function clear()
     {
@@ -73,11 +77,22 @@ class Parser
 
         foreach ($matches as $match) {
             if (!empty($match['node'])) {
-                if (!empty($match['end1'])) {
-                    if ($parentNode instanceof ElementNodeInterface) {
+                if (!empty($match['end1']) && !empty($match['tag'])) {
+                    // ignore close tag for other tag
+                    if ($parentNode && $parentNode instanceof ElementNodeInterface && $parentNode->tagName === $match['tag']) {
                         $parentNode->addEndTag($match['node']);
+                        $parentNode = $parentNode->parentNode;
+                    } else {
+                        // try find parent for this tag
+                        if ('div' === $match['tag']) {
+                            if ($parentNode && $parentNode->parentNode && $parentNode->parentNode instanceof ElementNodeInterface && $parentNode->parentNode->tagName === $match['tag']) {
+                                $parentNode = $parentNode->parentNode;
+                                $parentNode->addEndTag($match['node']);
+                                $parentNode = $parentNode->parentNode;
+                            }
+                        }
                     }
-                    $parentNode = $parentNode->parentNode;
+
                     $node = null;
                 } else {
                     $node = $this->parseStringTag($match['node'], $parentNode);
@@ -104,16 +119,25 @@ class Parser
 
             if (isset($match['text']) && strlen($match['text']) > 0) {
                 $textContent = $match['text'];
+                $isDoEncoding = $this->getAutoescapeTextNodes();
 
-                if (($parentNode instanceof \DOMElement) && preg_match('#script|template#i', $parentNode->tagName)) {
+                if (($parentNode instanceof \DOMElement) && preg_match('#script|template|style#i', $parentNode->tagName)) {
+                    $isDoEncoding = false;
                     $hash = str_replace(self::REMOVED_SCRIPTS_TEMPLATE, '', $match['text']);
                     if (isset($this->removedScripts[$hash])) {
                         $textContent = $this->removedScripts[$hash];
                     }
                 }
 
-                $textNode = new TextNode($textContent, false);
-                $parentNode->appendChild($textNode);
+                $textNode = new TextNode($textContent, $isDoEncoding);
+                if ($parentNode) {
+                    $parentNode->appendChild($textNode);
+                } else {
+                    if ($this->isDebug) {
+                        echo 'parser.php:' . __LINE__ . ' ' . $textNode . "'\n";
+                    }
+                }
+
             }
         }
     }
@@ -150,7 +174,15 @@ class Parser
                     return null;
                 }
 
-                $parentNode->appendChild($node);
+                if ($parentNode) {
+                    $parentNode->appendChild($node);
+                } else {
+                    if ($this->isDebug) {
+                        echo 'parser.php:' . __LINE__ . ' ' . $stringValue . "\n";
+                    }
+                }
+
+
             } else {
                 return null;
             }
@@ -190,7 +222,7 @@ class Parser
         }
 
         if (false !== preg_match_all(
-            '#(?<ws>\s+)?(?<name>[^\s=\'"]+)?(?:(?<sign>\s*=\s*)(?:"(?<value1>.*?)"|\'(?<value2>.*?)\'|(?<value3>[^\'">\s]+))?)?#is',
+            '#(?<ws>\s+)?(?<noise>[\W]+)?(?<name>[^\s=\'"]+)?(?:(?<sign>\s*=\s*)(?:"(?<value1>.*?)"|\'(?<value2>.*?)\'|(?<value3>[^>\s]+))?)?#is',
             $attrStr,
             $matches,
             PREG_SET_ORDER
@@ -239,7 +271,15 @@ class Parser
             $signStr = !empty($attr['sign']) ? $attr['sign'] : null;
             $whitespaceBefore = isset($attr['ws']) ? $attr['ws'] : '';
 
-            $attributesArr[] = new NodeAttribute($name, $value, $whitespaceBefore, $signStr, $quotesSymbol);
+            // ignore invalid attributes
+            try {
+                $attributesArr[] = new NodeAttribute($name, $value, $whitespaceBefore, $signStr, $quotesSymbol, $this->getAutoescapeTextNodes());
+            } catch (\Exception $e) {
+                if ($this->isDebug) {
+                    echo 'parser.php:' . __LINE__; print_r($attr); echo "\n";
+                }
+            }
+
         }
 
         return $attributesArr;
@@ -272,9 +312,7 @@ class Parser
     }
 
     /**
-     * The only way to get the correct HTML.
-     *
-     * @return string
+     * {@inheritDoc}
      */
     public function getHtml()
     {
@@ -308,7 +346,7 @@ class Parser
         $removedScripts = [];
         $scriptsCnt = 0;
         $template = static::REMOVED_SCRIPTS_TEMPLATE;
-        $html = preg_replace_callback("#<!--.*?-->|<(?<tag>script|template)\b([^>]*)>(.*?)</\\1>#is", function ($matches) use ($template, &$scriptsCnt, &$removedScripts) {
+        $html = preg_replace_callback("#<!--.*?-->|<(?<tag>script|template|style)\b([^>]*)>(.*?)</\\1>#is", function ($matches) use ($template, &$scriptsCnt, &$removedScripts) {
             if (empty($matches['tag'])) {
                 return $matches[0];
             }
@@ -332,11 +370,7 @@ class Parser
     }
 
     /**
-     * Reference to the DomDocument object of the current parsing result.
-     * Note that it is better to use the getHtml() method instead saveHtml().
-     *  @see DomDocument::getHtml()
-     *
-     * @return DomDocument
+     * {@inheritDoc}
      */
     public function getDomDocument()
     {
@@ -345,5 +379,21 @@ class Parser
         }
 
         return $this->domDocument;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function setAutoescapeTextNodes($isAutoescape)
+    {
+        $this->isAutoescapeTextNodes = $isAutoescape;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getAutoescapeTextNodes()
+    {
+        return $this->isAutoescapeTextNodes;
     }
 }

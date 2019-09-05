@@ -7,10 +7,12 @@ use Yugeon\HTML5Parser\DomDocumentInterface;
 use Yugeon\HTML5Parser\Parser;
 use Yugeon\HTML5Parser\ElementNode;
 use Yugeon\HTML5Parser\NodeAttribute;
+use Yugeon\HTML5Parser\ParserInterface;
 
 class ParserTest extends TestCase
 {
 
+    /** @var Parser */
     private $testClass;
 
     function setUp()
@@ -26,6 +28,11 @@ class ParserTest extends TestCase
     public function testObjectIsOfCorrectType()
     {
         $this->assertTrue(get_class($this->testClass) == 'Yugeon\HTML5Parser\Parser');
+    }
+
+    public function testMustImplementParserInterface()
+    {
+        $this->isInstanceOf(ParserInterface::class, $this->testClass);
     }
 
     public function testMustBeEmptyResultIfParseNotCalled()
@@ -130,7 +137,7 @@ class ParserTest extends TestCase
 
     public function testMustCorrectParseTagsWithAnyAttributes()
     {
-        $html = '<div class="red>green">Hello</div>';
+        $html = '<div class="red>green" style="" a="c">Hello</div>';
         $domDocument = $this->testClass->parse($html);
         $this->assertEquals($html, $domDocument->getHtml());
 
@@ -243,7 +250,7 @@ class ParserTest extends TestCase
     {
         $html = '< div>hello </div>';
         $domDocument = $this->testClass->parse($html);
-        $this->assertEquals('hello ', $domDocument->getHtml());
+        $this->assertEquals('', $domDocument->getHtml());
     }
 
     public function testCanParseCustomTags()
@@ -334,6 +341,29 @@ HTML;
         $this->assertEquals($html, $domDocument->getHtml());
     }
 
+    public function testMustCloseOnlyPairTag()
+    {
+        $html = '<div> hello </span> world</div>';
+        $expected = '<div> hello  world</div>';
+        $domDocument = $this->testClass->parse($html);
+        $this->assertEquals($expected, $domDocument->getHtml());
+    }
+
+    public function testCanIgnoreCloseTagForSelfClosingTags()
+    {
+        $html = "<img src='https://rover.ebay.com/roversync/?&mpt=1567612636909'></img>";
+        $expected = "<img src='https://rover.ebay.com/roversync/?&mpt=1567612636909'>";
+        $domDocument = $this->testClass->parse($html);
+        $this->assertEquals($expected, $domDocument->getHtml());
+    }
+
+    public function testCanParseAttributesWithNS()
+    {
+        $html = '<html xmlns:fb="http://www.facebook.com/2008/fbml" xmlns:og="http://opengraphprotocol.org/schema/" lang=en>';
+        $domDocument = $this->testClass->parse($html);
+        $this->assertEquals($html, $domDocument->getHtml());
+    }
+
     public function testCanParseEmptyScriptTags()
     {
         $html = <<<HTML
@@ -404,5 +434,128 @@ HTML;
 HTML;
         $domDocument = $this->testClass->parse($html);
         $this->assertEquals($html, $domDocument->getHtml());
+    }
+
+    public function testCanEnableAutoEscapeSpecialCharsInTextNodes()
+    {
+        $this->assertFalse($this->testClass->getAutoescapeTextNodes());
+        $this->testClass->setAutoescapeTextNodes(true);
+        $this->assertTrue($this->testClass->getAutoescapeTextNodes());
+    }
+
+    public function testDefaultNotEscapeSpecialCharsInTextNodes()
+    {
+        $html = '<a href="https://www.ebay.com/b/Womens-Clothing/15724/&amp;bn_661783"
+        _sp="p2481888.m1380.l3251" class="hl-cat-nav__js-link">Women\'s Clothing</a>';
+        $domDocument = $this->testClass->parse($html);
+        $this->assertEquals($html, $domDocument->getHtml());
+    }
+
+    public function testDefaultNotEscapeSpecialCharsInAttributes()
+    {
+        $html = '<a href="&">Women\'s Clothing</a>';
+        $domDocument = $this->testClass->parse($html);
+        $this->assertEquals($html, $domDocument->getHtml());
+    }
+
+    public function testCanEscapeSpecialCharactersInTextNodes()
+    {
+        $html = '<a href="https://www.ebay.com/b/Womens-Clothing/15724/&amp;bn_661783"
+        _sp="p2481888.m1380.l3251" class="hl-cat-nav__js-link">Women\'s Clothing</a>';
+        $expected = '<a href="https://www.ebay.com/b/Womens-Clothing/15724/&amp;bn_661783"
+        _sp="p2481888.m1380.l3251" class="hl-cat-nav__js-link">Women&apos;s Clothing</a>';
+
+        $this->testClass->setAutoescapeTextNodes(true);
+        $domDocument = $this->testClass->parse($html);
+
+        $this->assertEquals($expected, $domDocument->getHtml());
+    }
+
+    public function testCanEscapeSpecialCharactersInAttributes()
+    {
+        $html = '<a href="&">Women\'s Clothing</a>';
+        $expected = '<a href="&amp;">Women&apos;s Clothing</a>';
+        $this->testClass->setAutoescapeTextNodes(true);
+        $domDocument = $this->testClass->parse($html);
+        $this->assertEquals($expected, $domDocument->getHtml());
+    }
+
+    public function testDontEscapeSpecialCharactersInScriptNodes()
+    {
+        $html = "<script>
+        //<![CDATA[
+            var BLANK_URL = '';
+            var BLANK_IMG = '';
+            //]]>
+        </script>";
+        $domDocument = $this->testClass->parse($html);
+
+        $this->assertEquals($html, $domDocument->getHtml());
+    }
+
+    public function testDontEscapeSpecialCharactersInStyleNodes()
+    {
+        $html = '<style>
+            .font-marketsans body {
+                font-family: "Market San\'s", Arial, sans-serif;
+            }
+        </style>';
+        $domDocument = $this->testClass->parse($html);
+
+        $this->assertEquals($html, $domDocument->getHtml());
+    }
+
+    public function testCanParseDifficultHtml()
+    {
+        $htmls = [
+            '<img id="icImg" class="img img500 " itemprop="image" src="https://i.ebayimg.com/images/g/QOIAAOSwT9lcp2JJ/s-l500.png" style="" onload="picTimer=new Date().getTime();"  onerror=if(trackingUtil)trackingUtil(\'VI_MAIN_IMG_ON_ERROR\') clk="" alt="Apple-iPhone-6-16GB-64GB-128GB-Fully-Unlocked-Excellent-Condition" />',
+            '<a role="button" _sp=\'p2047675.l2567\' id="inst_sale_btn" style=""
+                                    class="btn btn-ter btn-m  "
+                                    href="http://cgi5.ebay.com/ws/eBayISAPI.dll?SellLikeItem&item=113709162590&rt=nc&_trksid=p2047675.l2567"
+                                    vib="vib" ">',
+            '<span>
+            <a role="button" _sp=\'p2047675.l2567\' id="inst_sale_btn" style=""
+                class="btn btn-ter btn-m  "
+                href="http://cgi5.ebay.com/ws/eBayISAPI.dll?SellLikeItem&item=113709162590&rt=nc&_trksid=p2047675.l2567"
+                vib="vib" ">
+Sell now<span class=" clipped"> - Upgrading? Sell it, don\'t trade it.</span>
+        </a>
+        </span>',
+            '<img id="icImg" class="img img500 " itemprop="image"
+            src="https://i.ebayimg.com/images/g/QOIAAOSwT9lcp2JJ/s-l500.png"
+            style="" onload="picTimer=new Date().getTime();"
+            onerror=if(trackingUtil)trackingUtil(\'VI_MAIN_IMG_ON_ERROR\')
+            clk=""
+            alt="Apple-iPhone-6-16GB-64GB-128GB-Fully-Unlocked-Excellent-Condition" />',
+           '<div class="filter-control" role="button" tabindex="0" aria-expanded="true"><img src="/on/demahotdogs.svg" /><span>Hide filter<span></span></div>'
+        ];
+
+        $expected = [
+            '<img id="icImg" class="img img500 " itemprop="image" src="https://i.ebayimg.com/images/g/QOIAAOSwT9lcp2JJ/s-l500.png" style="" onload="picTimer=new Date().getTime();"  onerror=if(trackingUtil)trackingUtil(\'VI_MAIN_IMG_ON_ERROR\') clk="" alt="Apple-iPhone-6-16GB-64GB-128GB-Fully-Unlocked-Excellent-Condition" />',
+            '<a role="button" _sp=\'p2047675.l2567\' id="inst_sale_btn" style=""
+                                    class="btn btn-ter btn-m  "
+                                    href="http://cgi5.ebay.com/ws/eBayISAPI.dll?SellLikeItem&item=113709162590&rt=nc&_trksid=p2047675.l2567"
+                                    vib="vib" >',
+            '<span>
+            <a role="button" _sp=\'p2047675.l2567\' id="inst_sale_btn" style=""
+                class="btn btn-ter btn-m  "
+                href="http://cgi5.ebay.com/ws/eBayISAPI.dll?SellLikeItem&item=113709162590&rt=nc&_trksid=p2047675.l2567"
+                vib="vib" >
+Sell now<span class=" clipped"> - Upgrading? Sell it, don\'t trade it.</span>
+        </a>
+        </span>',
+            '<img id="icImg" class="img img500 " itemprop="image"
+            src="https://i.ebayimg.com/images/g/QOIAAOSwT9lcp2JJ/s-l500.png"
+            style="" onload="picTimer=new Date().getTime();"
+            onerror=if(trackingUtil)trackingUtil(\'VI_MAIN_IMG_ON_ERROR\')
+            clk=""
+            alt="Apple-iPhone-6-16GB-64GB-128GB-Fully-Unlocked-Excellent-Condition" />',
+           '<div class="filter-control" role="button" tabindex="0" aria-expanded="true"><img src="/on/demahotdogs.svg" /><span>Hide filter<span></span></div>',
+        ];
+
+        foreach ($htmls as $index => $html) {
+            $domDocument = $this->testClass->parse($html);
+            $this->assertEquals($expected[$index], $domDocument->getHtml());
+        }
     }
 }

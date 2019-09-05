@@ -106,7 +106,7 @@ class NodeAttributeTest extends TestCase {
         $name = 'id';
         $value = 'some-id';
         $this->testClass = new NodeAttribute($name, $value);
-        $this->assertEquals("{$name}={$value}", $this->testClass->getHtml());
+        $this->assertEquals("{$name}=\"{$value}\"", $this->testClass->getHtml());
     }
 
     public function testCanGetHtmlWithEmptyValue()
@@ -140,7 +140,7 @@ class NodeAttributeTest extends TestCase {
         $value = 'some-id';
         $ws = '  ';
         $this->testClass = new NodeAttribute($name, $value, $ws);
-        $this->assertEquals("{$ws}{$name}={$value}", $this->testClass->getHtml());
+        $this->assertEquals("{$ws}{$name}=\"{$value}\"", $this->testClass->getHtml());
     }
 
     public function testMustPreservQuotes()
@@ -148,7 +148,15 @@ class NodeAttributeTest extends TestCase {
         $name = 'id';
         $value = "' some-id '";
         $this->testClass = new NodeAttribute($name, $value);
-        $this->assertEquals("{$name}={$value}", $this->testClass->getHtml());
+        $this->assertEquals("{$name}=\"{$value}\"", $this->testClass->getHtml());
+    }
+
+    public function testMustAutoQuotesValues()
+    {
+        $name = 'id';
+        $value = " some-id ";
+        $this->testClass = new NodeAttribute($name, $value);
+        $this->assertEquals("{$name}=\"{$value}\"", $this->testClass->getHtml());
     }
 
     public function testCanReturnHtmlWithoutQuotes()
@@ -188,6 +196,7 @@ class NodeAttributeTest extends TestCase {
             'some&quot;id',
             "some'id",
             "some&apos;id",
+            ")",
         ];
 
         foreach ($values as $value) {
@@ -209,6 +218,46 @@ class NodeAttributeTest extends TestCase {
 
         $this->assertEquals($name, $this->testClass->name);
         $this->assertEquals($value, $this->testClass->value);
+    }
+
+    public function testCanEncodeSpecialChars()
+    {
+        $name = 'id';
+        $value = '< > & \' "';
+        $this->testClass = new NodeAttribute($name, $value, '', null, '"', true);
+        $this->assertEquals('&lt; &gt; &amp; &apos; &quot;', $this->testClass->value);
+    }
+
+    public function testNotDecodeTwiceSpecialChars()
+    {
+        $name = 'id';
+        $value = '&lt; &gt; &amp; &apos; &quot;';
+        $this->testClass = new NodeAttribute($name, $value, '', null, '"', true);
+        $this->assertEquals('&lt; &gt; &amp; &apos; &quot;', $this->testClass->value);
+    }
+
+    public function testDefaultNotEncodeSpecialChars()
+    {
+        $name = 'id';
+        $value = '< > & \' "';
+        $this->testClass = new NodeAttribute($name, $value);
+        $this->assertEquals($value, $this->testClass->value);
+    }
+
+    public function testGetHtmlMustPreserveSpecialChars()
+    {
+        $name = 'id';
+        $value = '< > & \' "';
+        $this->testClass = new NodeAttribute($name, $value, '', null, '"', true);
+        $this->assertEquals('id="&lt; &gt; &amp; &apos; &quot;"', $this->testClass->getHtml());
+    }
+
+    public function testCanSetAttributesWithNS()
+    {
+        $name = 'xmlns:fb';
+        $value = 'http://www.facebook.com/2008/fbml';
+        $this->testClass = new NodeAttribute($name, $value, '', null, '"', true);
+        $this->assertEquals("{$name}=\"{$value}\"", $this->testClass->getHtml());
     }
 
 }

@@ -5,7 +5,7 @@ namespace Yugeon\HTML5Parser;
 class TextNode extends \DOMText implements NodeInterface
 {
 
-    public function __construct($value = '', $doEncode = true)
+    public function __construct($value = '', $doEncode = false)
     {
         if ($doEncode) {
             $value = $this->htmlDecode($value);
@@ -59,7 +59,7 @@ class TextNode extends \DOMText implements NodeInterface
      */
     public function getHtml()
     {
-        return $this->wholeText;
+        return $this->nodeValue;
     }
 
     /**
