@@ -35,12 +35,13 @@ class Parser implements ParserInterface
         $this->preserveDocumentWhitespace($html);
         $html = $this->preserveScripts($html);
 
+        // tags + string tag
+        // (?:(?<comment><!--.*?-->)|(?<node><\s*(?<end1>/)?(?<tag>\s*[^\s/>]+)(?<attr>(?:[^=/>]+(?:=\s*(?:".*?"|\'.*?\'|[^>\s]+)?)?)*)(?<end2>\s*/)?\s*>))(?<text>[^<]+)?
+
+        // tags + string tag + attr
+        // (?:(?<comment><!--.*?-->)|(?<node><\s*(?<end1>/)?(?<tag>\s*[^\s/>]+)(?<attr>(?:(?<ws>\s+)?[^>\w]*(?<name>[^\s=>]+)?(?:(?<sign>\s*=\s*)(?:"(?<value1>.*?)"|'(?<value2>.*?)'|(?<value3>[^>\s]+))?)?)*)(?<end2>\s*/)?\s*>))(?<text>[^<]+)?
         if (false !== preg_match_all(
-            // '#(?:(?<comment><!--.*?-->)|(?<node><(?<end1>/)?(?:[^\'">]+|".*?"|\'.*?\')+>))(?<text>[^<]*)#is',
-            // '#(?:(?<comment><!--.*?-->)|(?<node><(?<end1>/)?(?:[^\'">]+|\s*=\s*".*?"|\s*=\s*\'.*?\')+>))(?<text>[^<]*)#is',
-            // '#(?:(?<comment><!--.*?-->)|(?<node><(?<end1>/)?(?:[^\'=">]*(?:=\s*(?:".*?"|\'.*?\'))?)*>))(?<text>[^<]*)#is',
-//            '#(?:(?<comment><!--.*?-->)|(?<node><(?<end1>/)?(?<tag>[^\s>/]+)\s*(?:[\s\w-<:]+(?:=\s*(?:".*?"|\'.*?\'|[^>\s]+)?)?)*\s*/? >))(?<text>[^<]*)#is',
-            '#(?:(?<comment><!--.*?-->)|(?<node><(?<end1>/)?(?<tag>[^\s>/]+)\s*(?:[^=>]+(?:=\s*(?:".*?"|\'.*?\'|[^>\s]+)?)?)*\s*/?>))(?<text>[^<]*)#is',
+            '#(?:(?<comment><!--.*?-->)|(?<node><(?<end1>/)?[^\w<>]*(?<tag>[^\s>/]+)\s*(?:[^=>]+(?:=\s*(?:".*?"|\'.*?\'|[^>\s]+)?)?)*\s*/?>))(?<text>[^<]+)?#is',
             $html,
             $matches,
             PREG_SET_ORDER
@@ -85,14 +86,17 @@ class Parser implements ParserInterface
                     } else {
                         // try find parent for this tag it this tag not self closing
                         $isFind = false;
-                        $tempNode = new ElementNode($match['tag']);
-                        if (!$tempNode->isSelfClosingTag()) {
-                            if ($parentNode && $parentNode->parentNode && $parentNode->parentNode instanceof ElementNodeInterface && $parentNode->parentNode->tagName === $match['tag']) {
-                                $parentNode = $parentNode->parentNode;
-                                $parentNode->addEndTag($match['node']);
-                                $parentNode = $parentNode->parentNode;
-                                $isFind = true;
+                        try {
+                            $tempNode = new ElementNode($match['tag']);
+                            if (!$tempNode->isSelfClosingTag()) {
+                                if ($parentNode && $parentNode->parentNode && $parentNode->parentNode instanceof ElementNodeInterface && $parentNode->parentNode->tagName === $match['tag']) {
+                                    $parentNode = $parentNode->parentNode;
+                                    $parentNode->addEndTag($match['node']);
+                                    $parentNode = $parentNode->parentNode;
+                                    $isFind = true;
+                                }
                             }
+                        } catch (\Exception $e) {
                         }
 
                         if (!$isFind) {
@@ -115,8 +119,6 @@ class Parser implements ParserInterface
             }
 
             if (!is_null($node) && $node instanceof \DOMNode) {
-
-                // $parentNode->appendChild($node);
 
                 if ($node->isSelfClosingTag() || $node->isComment()) {
                     $parentNode = $node->parentNode;
@@ -153,7 +155,7 @@ class Parser implements ParserInterface
     }
 
     /**
-     * Parses a string tag into a node object and inserts it into the node tree.
+     * Parses a begin string tag into a node object and inserts it into the node tree.
      *
      * @param string $stringValue
      * @param \DOMNode $parentNode
@@ -166,7 +168,7 @@ class Parser implements ParserInterface
         }
 
         if (false !== preg_match(
-            '#<(?<tag>[^!\s>/]+|!doctype)(?<attr>\s+(?:[^\'"/>]+|".*?"|\'.*?\')*)?(?<end2>\s*/)?>#is',
+            '#<(?<tag>\s*[^\s>/]+)(?<attr>(?:[^=/>]+(?:=\s*(?:".*?"|\'.*?\'|[^>\s]+)?)?)*)(?<end2>\s*/)?>#is',
             $stringValue,
             $matches
         )) {
@@ -236,7 +238,7 @@ class Parser implements ParserInterface
         }
 
         if (false !== preg_match_all(
-            '#(?<ws>\s+)?(?<noise>[\W]+)?(?<name>[^\s=\'"]+)?(?:(?<sign>\s*=\s*)(?:"(?<value1>.*?)"|\'(?<value2>.*?)\'|(?<value3>[^>\s]+))?)?#is',
+            '#(?<ws>\s+)?[\W]*(?<name>[^\s=]+)?(?:(?<sign>\s*=\s*)(?:"(?<value1>.*?)"|\'(?<value2>.*?)\'|(?<value3>[^>\s]+))?)?#is',
             $attrStr,
             $matches,
             PREG_SET_ORDER

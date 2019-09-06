@@ -12,6 +12,39 @@ use Yugeon\HTML5Parser\ParserInterface;
 class ParserTest extends TestCase
 {
 
+    protected $testHTMLForDebuggingRegex = <<<HTML
+<?xml version="1.0" encoding="UTF-8"?>
+<!doctype html>
+ <a role="button" _sp='p2047675.l2567' id="inst_sale_btn" style=""
+                        class="btn > ' btn-ter btn-m  "
+                        onerror=if(trackingUtil)trackingUtil('VI_MAIN_IMG_ON_ERROR')
+                        href="http://cgi5.ebay.com/ws/eBayISAPI.dll?SellLikeItem&item=113709162590&rt=nc&_trksid=p2047675.l2567"
+                        onclick="javascript: testClick('aaaa')"
+                        vib="vib" >
+            </.span>
+            <a role="button" _sp='p2047675.l2567' id="inst_sale_btn" style=""
+                class="btn btn-ter btn-m  "
+                href="http://cgi5.ebay.com/ws/eBayISAPI.dll?SellLikeItem&item=113709162590&rt=nc&_trksid=p2047675.l2567"
+                vib="vib" ">
+Sell now<span class=" clipped"> - Upgrading? Sell it, don\'t trade it.</span>
+        < /a> </ a / >
+        </span/> <!--> <!-- -->< div>
+            <img id="icImg" class="img img500 " itemprop="image"
+            src="https://i.ebayimg.com/images/g/QOIAAOSwT9lcp2JJ/s-l500.png"
+            style="" onload="picTimer=new Date().getTime();"
+            onerror=if(trackingUtil)trackingUtil('VI_MAIN_IMG_ON_ERROR') />
+           <div class="filter-control" role="button" tabindex="0" aria-expanded="true"><img src="/on/demahotdogs.svg" /><span>Hide filter<span></span></div>
+HTML;
+
+//     protected $testTagForDebuggingRegex = <<<HTML
+// </div role="button" _sp='p2047675.l2567' id="inst_sale_btn" style=""
+//                         class="btn > ' btn-ter btn-m  "
+//                         onerror=if(trackingUtil)trackingUtil('VI_MAIN_IMG_ON_ERROR')
+//                         href="http://cgi5.ebay.com/ws/eBayISAPI.dll?SellLikeItem&item=113709162590&rt=nc&_trksid=p2047675.l2567"
+//                         onclick="javascript: testClick('aaaa')"
+//                         vib="vib" />
+// HTML;
+
     /** @var Parser */
     private $testClass;
 
@@ -248,7 +281,7 @@ class ParserTest extends TestCase
 
     public function testMustPreserveInvalidTagsAsText()
     {
-        $html = '<#div>hello </div>';
+        $html = '<#div>hello</div> < div>world</div>';
         $domDocument = $this->testClass->parse($html);
         $this->assertEquals($html, $domDocument->getHtml());
     }
@@ -506,7 +539,6 @@ HTML;
     public function testCanParseDifficultHtml()
     {
         $htmls = [
-            '<img id="icImg" class="img img500 " itemprop="image" src="https://i.ebayimg.com/images/g/QOIAAOSwT9lcp2JJ/s-l500.png" style="" onload="picTimer=new Date().getTime();"  onerror=if(trackingUtil)trackingUtil(\'VI_MAIN_IMG_ON_ERROR\') clk="" alt="Apple-iPhone-6-16GB-64GB-128GB-Fully-Unlocked-Excellent-Condition" />',
             '<a role="button" _sp=\'p2047675.l2567\' id="inst_sale_btn" style=""
                                     class="btn btn-ter btn-m  "
                                     href="http://cgi5.ebay.com/ws/eBayISAPI.dll?SellLikeItem&item=113709162590&rt=nc&_trksid=p2047675.l2567"
@@ -525,11 +557,11 @@ Sell now<span class=" clipped"> - Upgrading? Sell it, don\'t trade it.</span>
             onerror=if(trackingUtil)trackingUtil(\'VI_MAIN_IMG_ON_ERROR\')
             clk=""
             alt="Apple-iPhone-6-16GB-64GB-128GB-Fully-Unlocked-Excellent-Condition" />',
-           '<div class="filter-control" role="button" tabindex="0" aria-expanded="true"><img src="/on/demahotdogs.svg" /><span>Hide filter<span></span></div>'
+           '<div class="filter-control" role="button" tabindex="0" aria-expanded="true"><img src="/on/demahotdogs.svg" /><span>Hide filter<span></span></div>',
+           '<span <name=></span>'
         ];
 
         $expected = [
-            '<img id="icImg" class="img img500 " itemprop="image" src="https://i.ebayimg.com/images/g/QOIAAOSwT9lcp2JJ/s-l500.png" style="" onload="picTimer=new Date().getTime();"  onerror=if(trackingUtil)trackingUtil(\'VI_MAIN_IMG_ON_ERROR\') clk="" alt="Apple-iPhone-6-16GB-64GB-128GB-Fully-Unlocked-Excellent-Condition" />',
             '<a role="button" _sp=\'p2047675.l2567\' id="inst_sale_btn" style=""
                                     class="btn btn-ter btn-m  "
                                     href="http://cgi5.ebay.com/ws/eBayISAPI.dll?SellLikeItem&item=113709162590&rt=nc&_trksid=p2047675.l2567"
@@ -549,6 +581,7 @@ Sell now<span class=" clipped"> - Upgrading? Sell it, don\'t trade it.</span>
             clk=""
             alt="Apple-iPhone-6-16GB-64GB-128GB-Fully-Unlocked-Excellent-Condition" />',
            '<div class="filter-control" role="button" tabindex="0" aria-expanded="true"><img src="/on/demahotdogs.svg" /><span>Hide filter<span></span></div>',
+           '<span name=></span>'
         ];
 
         foreach ($htmls as $index => $html) {
