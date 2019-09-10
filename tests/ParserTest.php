@@ -129,11 +129,12 @@ HTML;
                         var a = "<body></body>";
                     </script>
                     <template id="abc">
-                        <div>hello</div>
+                        <div id="fail">hello</div>
                     </template>
                 </div>';
         $domDocument = $this->testClass->parse($html);
         $this->assertEquals($html, $domDocument->getHtml());
+        $this->assertNull($this->testClass->getDomDocument()->getElementById('fail'));
     }
 
     public function testCloseTagNotCreateNewNode()

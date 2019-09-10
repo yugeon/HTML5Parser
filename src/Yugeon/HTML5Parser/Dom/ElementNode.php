@@ -17,6 +17,13 @@ class ElementNode extends \DOMElement implements NodeInterface, ElementNodeInter
     protected $whitespaceAfter = '';
 
     /**
+     * Collection for fix refs to child nodes.
+     *
+     * @var ElementNode[]
+     */
+    protected $_nodes = [];
+
+    /**
      * Collection for fix refs to attributes object.
      *
      * @var NodeAttributes[]
@@ -210,7 +217,14 @@ class ElementNode extends \DOMElement implements NodeInterface, ElementNodeInter
 
         // fix ref to attribute object
         $this->_attrs[$attr->name] = $attr;
-        return parent::setAttributeNode($attr);
+
+        $domAttr = parent::setAttributeNode($attr);
+
+        if (0 === strcasecmp('id', $attr->name)) {
+            $this->setIdAttribute('id', true);
+        }
+
+        return $domAttr;
     }
 
     /**

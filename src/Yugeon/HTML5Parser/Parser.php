@@ -369,7 +369,45 @@ class Parser implements ParserInterface
         $removedScripts = [];
         $scriptsCnt = 0;
         $template = static::REMOVED_SCRIPTS_TEMPLATE;
-        $html = preg_replace_callback("#<!--.*?-->|<(?<tag>script|template|style)\b([^>]*)>(.*?)</\\1>#is", function ($matches) use ($template, &$scriptsCnt, &$removedScripts) {
+
+        // need process larg content of script with str* functions
+        $startScriptOffset = 0;
+        while (preg_match('#<!--.*?-->|<script\b[^>]*>#is', $html, $startScript, PREG_OFFSET_CAPTURE, $startScriptOffset)) {
+
+            if (!isset($startScript[0]) || !isset($startScript[0][0]) || !isset($startScript[0][1])) {
+                break;
+            }
+
+            $startScriptOffset = $startScript[0][1] + strlen($startScript[0][0]);
+
+            // skip comments
+            if (0 === strpos($startScript[0][0], '<!--')) {
+                continue;
+            }
+
+            $endScriptOffset = stripos($html, '</script>', $startScriptOffset);
+
+            if (false === $endScriptOffset) {
+                // not closed script tag
+                break;
+            }
+
+            $scriptContent = substr($html, $startScriptOffset, $endScriptOffset - $startScriptOffset);
+
+            if (empty($scriptContent)) {
+                // not preserve empty script content
+                continue;
+            }
+
+            $scriptHash = md5($scriptContent);
+            $html = substr_replace($html, $template . $scriptHash, $startScriptOffset, $endScriptOffset - $startScriptOffset);
+
+            $removedScripts[$scriptHash] = $scriptContent;
+            $scriptsCnt++;
+            $startScriptOffset = $endScriptOffset + strlen('</script>');
+        }
+
+        $html = preg_replace_callback("#<!--.*?-->|<(?<tag>template|style)\b([^>]*)>(.*?)</\\1>#is", function ($matches) use ($template, &$scriptsCnt, &$removedScripts) {
             if (empty($matches['tag'])) {
                 return $matches[0];
             }
