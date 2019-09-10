@@ -1,6 +1,6 @@
 <?php
 
-namespace Yugeon\HTML5Parser;
+namespace Yugeon\HTML5Parser\Dom;
 
 class ElementNode extends \DOMElement implements NodeInterface, ElementNodeInterface
 {

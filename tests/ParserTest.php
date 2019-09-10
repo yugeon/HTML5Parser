@@ -3,11 +3,11 @@
 namespace Yugeon\HTML5Parser\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Yugeon\HTML5Parser\DomDocumentInterface;
+use Yugeon\HTML5Parser\Dom\DomDocumentInterface;
 use Yugeon\HTML5Parser\Parser;
-use Yugeon\HTML5Parser\ElementNode;
-use Yugeon\HTML5Parser\NodeAttribute;
-use Yugeon\HTML5Parser\ParserInterface;
+use Yugeon\HTML5Parser\Dom\ElementNode;
+use Yugeon\HTML5Parser\Dom\NodeAttribute;
+use Yugeon\HTML5Parser\Dom\ParserInterface;
 
 class ParserTest extends TestCase
 {

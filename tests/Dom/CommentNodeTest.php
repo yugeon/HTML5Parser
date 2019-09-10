@@ -3,7 +3,7 @@
 namespace Yugeon\HTML5Parser\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Yugeon\HTML5Parser\CommentNode;
+use Yugeon\HTML5Parser\Dom\CommentNode;
 
 class CommentNodeTest extends TestCase
 {
@@ -23,7 +23,7 @@ class CommentNodeTest extends TestCase
 
     public function testObjectIsOfCorrectType()
     {
-        $this->assertTrue(get_class($this->testClass) == 'Yugeon\HTML5Parser\CommentNode');
+        $this->assertTrue(get_class($this->testClass) == 'Yugeon\HTML5Parser\Dom\CommentNode');
     }
 
     public function testMustBeInstanceOfDomElement()
@@ -40,7 +40,7 @@ class CommentNodeTest extends TestCase
 
     public function testMustImplementNodeInterface()
     {
-        $this->assertInstanceOf('Yugeon\Html5Parser\NodeInterface', $this->testClass);
+        $this->assertInstanceOf('Yugeon\Html5Parser\Dom\NodeInterface', $this->testClass);
     }
 
     public function testMustCorrectlyImplementInterface()

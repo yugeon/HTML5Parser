@@ -1,6 +1,6 @@
 <?php
 
-namespace Yugeon\HTML5Parser;
+namespace Yugeon\HTML5Parser\Dom;
 
 class TextNode extends \DOMText implements NodeInterface
 {

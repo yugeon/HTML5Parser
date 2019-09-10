@@ -15,7 +15,7 @@ interface ParserInterface {
      * Parse input html.
      *
      * @param string $html Input html.
-     * @return \DOMDocument
+     * @return \Yugeon\HTML5Parser\Dom\DomDocument
      */
     public function parse($html);
 
@@ -31,7 +31,7 @@ interface ParserInterface {
      * Note that it is better to use the getHtml() method instead saveHtml().
      *  @see DomDocument::getHtml()
      *
-     * @return DomDocument
+     * @return \Yugeon\HTML5Parser\Dom\DomDocument
      */
     public function getDomDocument();
 

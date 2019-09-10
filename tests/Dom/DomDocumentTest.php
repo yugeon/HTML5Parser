@@ -3,9 +3,9 @@
 namespace Yugeon\HTML5Parser\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Yugeon\HTML5Parser\DomDocument;
-use Yugeon\HTML5Parser\ElementNode;
-use Yugeon\HTML5Parser\TextNode;
+use Yugeon\HTML5Parser\Dom\DomDocument;
+use Yugeon\HTML5Parser\Dom\ElementNode;
+use Yugeon\HTML5Parser\Dom\TextNode;
 
 class DomDocumentTest extends TestCase
 {
@@ -24,7 +24,7 @@ class DomDocumentTest extends TestCase
 
     public function testObjectIsOfCorrectType()
     {
-        $this->assertTrue(get_class($this->testClass) == 'Yugeon\HTML5Parser\DomDocument');
+        $this->assertTrue(get_class($this->testClass) == 'Yugeon\HTML5Parser\Dom\DomDocument');
     }
 
     public function testMustBeInstanceOfDomDocument()
@@ -43,7 +43,7 @@ class DomDocumentTest extends TestCase
 
     public function testMustImplementDocumentInterface()
     {
-        $this->assertInstanceOf('Yugeon\Html5Parser\DomDocumentInterface', $this->testClass);
+        $this->assertInstanceOf('Yugeon\Html5Parser\Dom\DomDocumentInterface', $this->testClass);
     }
 
     public function testCanAddGetChildNode()

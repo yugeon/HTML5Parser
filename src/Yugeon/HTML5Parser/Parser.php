@@ -2,11 +2,18 @@
 
 namespace Yugeon\HTML5Parser;
 
+use Yugeon\HTML5Parser\Dom\DomDocument;
+use Yugeon\HTML5Parser\Dom\ElementNode;
+use Yugeon\HTML5Parser\Dom\ElementNodeInterface;
+use Yugeon\HTML5Parser\Dom\TextNode;
+use Yugeon\HTML5Parser\Dom\NodeAttribute;
+use Yugeon\HTML5Parser\Dom\CommentNode;
+
 class Parser implements ParserInterface
 {
     const REMOVED_SCRIPTS_TEMPLATE = 'XRMG83jy_';
 
-    /** @var \DOMDocument */
+    /** @var DomDocument */
     protected $domDocument = null;
 
     /**

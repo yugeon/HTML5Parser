@@ -3,10 +3,10 @@
 namespace Yugeon\HTML5Parser\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Yugeon\HTML5Parser\ElementNode;
-use Yugeon\HTML5Parser\NodeAttribute;
-use Yugeon\HTML5Parser\NodeAttributeInterface;
-use Yugeon\HTML5Parser\TextNode;
+use Yugeon\HTML5Parser\Dom\ElementNode;
+use Yugeon\HTML5Parser\Dom\NodeAttribute;
+use Yugeon\HTML5Parser\Dom\NodeAttributeInterface;
+use Yugeon\HTML5Parser\Dom\TextNode;
 
 class ElementNodeTest extends TestCase
 {
@@ -28,7 +28,7 @@ class ElementNodeTest extends TestCase
 
     public function testObjectIsOfCorrectType()
     {
-        $this->assertTrue(get_class($this->testClass) == 'Yugeon\HTML5Parser\ElementNode');
+        $this->assertTrue(get_class($this->testClass) == 'Yugeon\HTML5Parser\Dom\ElementNode');
     }
 
     public function testMustBeInstanceOfDomElement()
@@ -52,12 +52,12 @@ class ElementNodeTest extends TestCase
 
     public function testMustImplementNodeInterface()
     {
-        $this->assertInstanceOf('Yugeon\Html5Parser\NodeInterface', $this->testClass);
+        $this->assertInstanceOf('Yugeon\Html5Parser\Dom\NodeInterface', $this->testClass);
     }
 
     public function testMustImplementElementNodeInterface()
     {
-        $this->assertInstanceOf('Yugeon\Html5Parser\ElementNodeInterface', $this->testClass);
+        $this->assertInstanceOf('Yugeon\Html5Parser\Dom\ElementNodeInterface', $this->testClass);
     }
 
     public function testMustCorrectlyImplementInterface()

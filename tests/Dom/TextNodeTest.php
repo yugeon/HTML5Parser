@@ -3,7 +3,7 @@
 namespace Yugeon\HTML5Parser\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Yugeon\HTML5Parser\TextNode;
+use Yugeon\HTML5Parser\Dom\TextNode;
 
 class TextNodeTest extends TestCase
 {
@@ -26,7 +26,7 @@ class TextNodeTest extends TestCase
 
     public function testObjectIsOfCorrectType()
     {
-        $this->assertTrue(get_class($this->testClass) == 'Yugeon\HTML5Parser\TextNode');
+        $this->assertTrue(get_class($this->testClass) == 'Yugeon\HTML5Parser\Dom\TextNode');
     }
 
     public function testMustBeInstanceOfDomElement()
@@ -43,7 +43,7 @@ class TextNodeTest extends TestCase
 
     public function testMustImplementNodeInterface()
     {
-        $this->assertInstanceOf('Yugeon\Html5Parser\NodeInterface', $this->testClass);
+        $this->assertInstanceOf('Yugeon\Html5Parser\Dom\NodeInterface', $this->testClass);
     }
 
     public function testMustCorrectlyImplementInterface()

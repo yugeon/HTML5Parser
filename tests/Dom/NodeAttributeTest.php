@@ -3,7 +3,7 @@
 namespace Yugeon\HTML5Parser\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Yugeon\HTML5Parser\NodeAttribute;
+use Yugeon\HTML5Parser\Dom\NodeAttribute;
 
 class NodeAttributeTest extends TestCase {
 
@@ -19,12 +19,12 @@ class NodeAttributeTest extends TestCase {
     }
 
     public function testObjectIsOfCorrectType() {
-        $this->assertTrue(get_class($this->testClass) == 'Yugeon\HTML5Parser\NodeAttribute');
+        $this->assertTrue(get_class($this->testClass) == 'Yugeon\HTML5Parser\Dom\NodeAttribute');
     }
 
     public function testMustImplementNodeAttributeInterface()
     {
-        $this->assertInstanceOf('Yugeon\Html5Parser\NodeAttributeInterface', $this->testClass);
+        $this->assertInstanceOf('Yugeon\Html5Parser\Dom\NodeAttributeInterface', $this->testClass);
     }
 
     public function testCanGetAttributeName()

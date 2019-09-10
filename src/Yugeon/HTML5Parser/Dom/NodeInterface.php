@@ -1,6 +1,6 @@
 <?php
 
-namespace Yugeon\HTML5Parser;
+namespace Yugeon\HTML5Parser\Dom;
 
 /**
  * Represetn HTML Node
