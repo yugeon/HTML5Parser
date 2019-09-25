@@ -137,6 +137,37 @@ HTML;
         $this->assertNull($this->testClass->getDomDocument()->getElementById('fail'));
     }
 
+    public function testMustCorrectPreserveScriptCommentTemplateStyleContent()
+    {
+        $html = <<<'HTML'
+<!--script>
+$(selector).before('<div class="alert c-closet-message">' + message + ' <a href="' + url + '">Click here</a>.</div>');
+</script-->
+<script>
+$(selector).before('<div class="alert c-closet-message">' + message + ' <a href="' + url + '">Click here</a>.</div>');
+</script>
+<script type="text/javascript">//<!--
+/* <![CDATA[ (head-active_data.js) */
+$(selector).before('<div class="alert c-closet-message">' + message + ' <a href="' + url + '">Click here</a>.</div>');
+/* ]]> */
+// -->
+</script><script type="text/javascript">//<!--
+/* <![CDATA[ (head-cquotient.js) */
+$(selector).before('<div class="alert c-closet-message">' + message + ' <a href="' + url + '">Click here</a>.</div>');
+/* ]]> */
+// -->
+</script>
+HTML;
+        $expectedHtml = <<<'HTML'
+<!--XRMG83jy_414e78ebefe361fff26f4227f309c6fd-->
+<script>XRMG83jy_0c97c5431374924ef45741863fe30fea</script>
+<script type="text/javascript">XRMG83jy_5df3cdbe49a6b950e62ab8b6bd9e72f4</script><script type="text/javascript">XRMG83jy_3d91b008bebb054f3db69d78bc948d0b</script>
+HTML;
+
+        $actualHtml = $this->testClass->preserveScripts($html);
+        $this->assertEquals($expectedHtml, $actualHtml);
+    }
+
     public function testCloseTagNotCreateNewNode()
     {
         $html = '<div>hello</div>';

@@ -324,7 +324,16 @@ class Parser implements ParserInterface
         if (false !== preg_match('#<(?<tag>!--)(?<comment>.*?)-->#is', $stringValue, $matches)) {
 
             if (isset($matches['comment'])) {
-                $node = new CommentNode($matches['comment']);
+
+                $commentContent = $matches['comment'];
+                if (!empty($commentContent)) {
+                    $hash = str_replace(self::REMOVED_SCRIPTS_TEMPLATE, '', $commentContent);
+                    if (isset($this->removedScripts[$hash])) {
+                        $commentContent = $this->removedScripts[$hash];
+                    }
+                }
+
+                $node = new CommentNode($commentContent);
                 $parentNode->appendChild($node);
             } else {
                 // TODO: not comment
@@ -364,32 +373,39 @@ class Parser implements ParserInterface
      * @param string $html Input html.
      * @return string HTML with simplified content of script and template tags.
      */
-    protected function preserveScripts($html)
+    public function preserveScripts($html)
     {
         $removedScripts = [];
         $scriptsCnt = 0;
         $template = static::REMOVED_SCRIPTS_TEMPLATE;
+        $templateLength = strlen($template);
 
         // need process larg content of script with str* functions
         $startScriptOffset = 0;
-        while (preg_match('#<!--.*?-->|<script\b[^>]*>#is', $html, $startScript, PREG_OFFSET_CAPTURE, $startScriptOffset)) {
+        while (preg_match('#<!--|<(?<tag>script|style|template)\b[^>]*>#is', $html, $startScript, PREG_OFFSET_CAPTURE, $startScriptOffset)) {
+            // index 0 - matched pattern
+            // index 1 - offset
 
-            if (!isset($startScript[0]) || !isset($startScript[0][0]) || !isset($startScript[0][1])) {
-                break;
-            }
+            // TODO: need this check?
+            // if (!isset($startScript[0]) || !isset($startScript[0][0]) || !isset($startScript[0][1])) {
+            //     break;
+            // }
 
             $startScriptOffset = $startScript[0][1] + strlen($startScript[0][0]);
+            $searchEndTagStr = '';
 
-            // skip comments
+            // its comment
             if (0 === strpos($startScript[0][0], '<!--')) {
-                continue;
+                $searchEndTagStr = '-->';
+            } else {
+                $searchEndTagStr = "</{$startScript['tag'][0]}>";
             }
 
-            $endScriptOffset = stripos($html, '</script>', $startScriptOffset);
+            $endScriptOffset = stripos($html, $searchEndTagStr, $startScriptOffset);
 
             if (false === $endScriptOffset) {
-                // not closed script tag
-                break;
+                // not closed tag
+                continue;
             }
 
             $scriptContent = substr($html, $startScriptOffset, $endScriptOffset - $startScriptOffset);
@@ -404,22 +420,9 @@ class Parser implements ParserInterface
 
             $removedScripts[$scriptHash] = $scriptContent;
             $scriptsCnt++;
-            $startScriptOffset = $endScriptOffset + strlen('</script>');
+            $startScriptOffset += $templateLength + 32 + strlen($searchEndTagStr);
         }
 
-        $html = preg_replace_callback("#<!--.*?-->|<(?<tag>template|style)\b([^>]*)>(.*?)</\\1>#is", function ($matches) use ($template, &$scriptsCnt, &$removedScripts) {
-            if (empty($matches['tag'])) {
-                return $matches[0];
-            }
-            if (empty($matches[3])) {
-                return $matches[0];
-            }
-            $hash = md5($matches[3]);
-            $result = "<{$matches[1]}{$matches[2]}>{$template}{$hash}</{$matches[1]}>";
-            $removedScripts[$hash] = $matches[3];
-            $scriptsCnt++;
-            return $result;
-        }, $html);
         $this->removedScripts = $removedScripts;
 
         return $html;
