@@ -621,4 +621,11 @@ Sell now<span class=" clipped"> - Upgrading? Sell it, don\'t trade it.</span>
             $this->assertEquals($expected[$index], $domDocument->getHtml());
         }
     }
+
+    public function testMustNotChangeNotHtml()
+    {
+        $notHtml = '{"promptForLocale":true,"targetLocale":"en-IE"}';
+        $this->testClass->parse($notHtml);
+        $this->assertEquals($notHtml, $this->testClass->getHtml());
+    }
 }

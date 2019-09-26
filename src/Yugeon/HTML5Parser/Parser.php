@@ -103,8 +103,7 @@ class Parser implements ParserInterface
                                     $isFind = true;
                                 }
                             }
-                        } catch (\Exception $e) {
-                        }
+                        } catch (\Exception $e) { }
 
                         if (!$isFind) {
                             // add as text node
@@ -156,7 +155,6 @@ class Parser implements ParserInterface
                         echo 'parser.php:' . __LINE__ . ' ' . $textNode . "'\n";
                     }
                 }
-
             }
         }
     }
@@ -204,8 +202,6 @@ class Parser implements ParserInterface
                         echo 'parser.php:' . __LINE__ . ' ' . $stringValue . "\n";
                     }
                 }
-
-
             } else {
                 return null;
             }
@@ -299,10 +295,11 @@ class Parser implements ParserInterface
                 $attributesArr[] = new NodeAttribute($name, $value, $whitespaceBefore, $signStr, $quotesSymbol, $this->getAutoescapeTextNodes());
             } catch (\Exception $e) {
                 if ($this->isDebug) {
-                    echo 'parser.php:' . __LINE__; print_r($attr); echo "\n";
+                    echo 'parser.php:' . __LINE__;
+                    print_r($attr);
+                    echo "\n";
                 }
             }
-
         }
 
         return $attributesArr;
@@ -360,10 +357,14 @@ class Parser implements ParserInterface
     protected function preserveDocumentWhitespace($html)
     {
         $firstTagPos = strpos($html, '<');
-        if (false !== $firstTagPos && 0 !== $firstTagPos) {
-            $this->getDomDocument()->setPreservedDocumentWhitespace(substr($html, 0, $firstTagPos));
+        if (false !== $firstTagPos) {
+            if (0 !== $firstTagPos) {
+                $this->getDomDocument()->setPreservedDocumentWhitespace(substr($html, 0, $firstTagPos));
+            } else {
+                $this->getDomDocument()->setPreservedDocumentWhitespace('');
+            }
         } else {
-            $this->getDomDocument()->setPreservedDocumentWhitespace('');
+            $this->getDomDocument()->setPreservedDocumentWhitespace($html);
         }
     }
 
