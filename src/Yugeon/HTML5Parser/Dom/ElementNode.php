@@ -236,10 +236,22 @@ class ElementNode extends \DOMElement implements NodeInterface, ElementNodeInter
         return $this->setAttributeNode($attr);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function appendChild($node)
     {
         $this->_nodes[] = $node;
         return parent::appendChild($node);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function insertBefore($newNode, $refNode = null)
+    {
+        $this->_nodes[] = $newNode;
+        return parent::insertBefore($newNode, $refNode);
     }
 
     public function __toString()
