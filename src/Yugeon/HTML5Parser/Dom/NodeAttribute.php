@@ -80,6 +80,19 @@ class NodeAttribute extends \DOMAttr implements NodeAttributeInterface
     /**
      * {@inheritDoc}
      */
+    public function setValue($value, $doEncode = false)
+    {
+        if ($doEncode) {
+            $value = $this->htmlDecode($value);
+            $value = $this->htmlEncode($value);
+        }
+
+        $this->value = $value;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function setPreservedWhitespace($ws)
     {
         $this->preservedWhitespace = $ws;

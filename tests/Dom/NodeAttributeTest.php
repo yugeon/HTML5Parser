@@ -36,8 +36,16 @@ class NodeAttributeTest extends TestCase {
     public function testCanGetAttributeValueAsString()
     {
         $attributeValue = 'test-value';
-        $this->testClass = new NodeAttribute('class', $attributeValue);
+        $this->testClass->setValue($attributeValue);
         $this->assertEquals($attributeValue, $this->testClass->getValue());
+    }
+
+    public function testCanEncodeValue()
+    {
+        $value = 'test&value';
+        $expectedValue = 'test&value';
+        $this->testClass->setValue($value, true);
+        $this->assertEquals($expectedValue, $this->testClass->value);
     }
 
     public function testCanInitializeFromConstructor()

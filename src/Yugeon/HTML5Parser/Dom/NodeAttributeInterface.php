@@ -23,6 +23,15 @@ interface NodeAttributeInterface
     public function getValue();
 
     /**
+     * Set an attribute value without quotes
+     *
+     * @param string $value
+     * @param bool $doEncode Autoescape value
+     * @return void
+     */
+    public function setValue($value, $doEncode = false);
+
+    /**
      * Set whitespace before attriubte name.
      *
      * @param string $ws
